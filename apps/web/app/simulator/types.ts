@@ -9,7 +9,7 @@ export interface NetworkConfig {
 export const NETWORKS: Record<NetworkType, NetworkConfig> = {
     mainnet: {
         name: "Mainnet",
-        fullnode: "https://mainnet.movementnetwork.xyz/v1",
+        fullnode: "https://full.mainnet.movementinfra.xyz/v1",
     },
     testnet: {
         name: "Testnet",
@@ -21,6 +21,38 @@ export const NETWORKS: Record<NetworkType, NetworkConfig> = {
         fullnode: "http://localhost:8080/v1",
     },
 };
+
+// Move function types
+export interface MoveFunctionParam {
+    constraints: string[];
+}
+
+export interface MoveExposedFunction {
+    name: string;
+    visibility: "public" | "friend" | "private";
+    is_entry: boolean;
+    is_view: boolean;
+    generic_type_params: MoveFunctionParam[];
+    params: string[];
+    return: string[];
+}
+
+export interface ModuleInfo {
+    name: string;
+    address: string;
+    functions: MoveExposedFunction[];
+}
+
+export interface ContractInfo {
+    address: string;
+    modules: ModuleInfo[];
+}
+
+export interface FunctionInputValue {
+    name: string;
+    type: string;
+    value: string;
+}
 
 export interface FunctionArgument {
     name: string;
@@ -79,10 +111,9 @@ export interface SimulationResult {
     success: boolean;
     vmStatus: string;
     gasUsed: number;
-    gasLimit: number;
-    assetChanges: AssetChange[];
+    gasUnitPrice: number;
+    maxGasAmount: number;
     events: SimulationEvent[];
-    trace: TraceNode;
     changes: unknown[];
     rawResponse: unknown;
 }
@@ -92,3 +123,12 @@ export interface SimulationState {
     error: string | null;
     result: SimulationResult | null;
 }
+
+// Transaction parameters
+export interface TransactionParameters {
+    senderAddress: string;
+    gasLimit: string;
+    gasPrice: string;
+    value: string;
+}
+
