@@ -15,7 +15,7 @@ import {
 import { NetworkType, NETWORKS } from "../types";
 import { movement } from "@/lib/movement";
 
-// Types for Movement module ABI (matching the API response)
+// types for movement module abi (matching the api response)
 interface MoveFunctionParam {
     constraints: string[];
 }
@@ -43,7 +43,7 @@ interface MoveModule {
     abi: MoveModuleABI;
 }
 
-// Simplified types for UI
+// simplified types for ui
 interface ModuleInfo {
     name: string;
     address: string;
@@ -83,16 +83,16 @@ export function ContractBlock({
     onTypeArgumentsChange,
     onNetworkChange,
 }: ContractBlockProps) {
-    // Address input mode
+    // address input mode
     const [addressMode, setAddressMode] = useState<AddressMode>("custom");
 
-    // Contract address
+    // contract address
     const [contractAddress, setContractAddress] = useState("");
     const [addressValidationError, setAddressValidationError] = useState<string | null>(null);
 
-    // Validate contract address format (0x + 64 hex characters = 32 bytes)
+    // validate contract address format (0x + 64 hex characters = 32 bytes)
     const validateAddress = (address: string): string | null => {
-        if (!address) return null; // Empty is okay, not an error yet
+        if (!address) return null; // empty is okay, not an error yet
 
         if (!address.startsWith("0x")) {
             return "Address must start with '0x'";
@@ -108,56 +108,56 @@ export function ContractBlock({
             return `Address must be 32 bytes (64 hex characters). Currently: ${hexPart.length}/64`;
         }
 
-        return null; // Valid
+        return null; // valid
     };
 
-    // Check if address is valid for fetching
+    // check if address is valid for fetching
     const isValidAddress = (address: string): boolean => {
         if (!address.startsWith("0x")) return false;
         const hexPart = address.slice(2);
         return hexPart.length === 64 && /^[a-fA-F0-9]+$/.test(hexPart);
     };
 
-    // Network selection
+    // network selection
     const [network, setNetwork] = useState<NetworkType>("mainnet");
 
-    // Contract info (fetched from network)
+    // contract info (fetched from network)
     const [contractInfo, setContractInfo] = useState<ContractInfo | null>(null);
     const [isLoadingContract, setIsLoadingContract] = useState(false);
     const [contractError, setContractError] = useState<string | null>(null);
 
-    // Selected module
+    // selected module
     const [selectedModule, setSelectedModule] = useState<string>("");
 
-    // Input mode for function parameters
+    // input mode for function parameters
     const [inputMode, setInputMode] = useState<InputMode>("structured");
 
-    // Selected function
+    // selected function
     const [selectedFunction, setSelectedFunction] = useState<string>("");
 
-    // Function input values
+    // function input values
     const [inputValues, setInputValues] = useState<FunctionInputValue[]>([]);
 
-    // Type argument values
+    // type argument values
     const [typeArgValues, setTypeArgValues] = useState<string[]>([]);
 
-    // Raw input data (for raw mode)
+    // raw input data (for raw mode)
     const [rawInputData, setRawInputData] = useState("");
 
-    // Get selected module object
+    // get selected module object
     const selectedModuleObj = contractInfo?.modules.find(
         (m) => m.name === selectedModule
     );
 
-    // Get selected function object
+    // get selected function object
     const selectedFunctionObj = selectedModuleObj?.functions.find(
         (f) => f.name === selectedFunction
     );
 
-    // Fetch contract modules when address and network change
+    // fetch contract modules when address and network change
     useEffect(() => {
         const fetchContractModules = async () => {
-            // Only fetch if address is valid format
+            // only fetch if address is valid format
             if (!isValidAddress(contractAddress)) {
                 setContractInfo(null);
                 setContractError(null);
@@ -332,25 +332,38 @@ export function ContractBlock({
             </div>
 
 
-            {/* donot remove */}
+            {/* Test button - uses a generated account to properly simulate */}
             <Button onClick={async () => {
                 try {
+                    // Import Account to generate a valid simulation account
+                    const { Account } = await import("@aptos-labs/ts-sdk");
+                    
+                    // Generate a simulation account - its public key will match its address
+                    const simulationAccount = Account.generate();
+                    
                     const transaction = await movement.transaction.build.simple({
                         data: {
                             function: "0x6a164188af7bb6a8268339343a5afe0242292713709af8801dafba3a054dc2f2::pool::lend",
                             functionArguments: [0, 100000, true],
                             typeArguments: ["0x1::aptos_coin::AptosCoin"]
                         },
-                        sender: "0xfa6f3fa8c7b86fc7d448a208a49ea27b5041737e270d8ecbedab2c5cbe758b04",
+                        // Use the simulation account's address so public key matches
+                        sender: simulationAccount.accountAddress.toString(),
+                        options: {
+                            // Use sequence number 0 for newly generated accounts
+                            // This allows simulation without the account existing on chain
+                            accountSequenceNumber: 0,
+                        },
                     })
 
+                    // Provide the matching public key for simulation
                     const sim = await movement.transaction.simulate.simple({
                         transaction,
-
+                        signerPublicKey: simulationAccount.publicKey,
                     })
-                    console.log(sim)
+                    console.log("Simulation successful:", sim)
                 } catch (error) {
-                    console.log(error)
+                    console.log("Simulation error:", error)
                 }
 
             }}>

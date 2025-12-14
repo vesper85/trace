@@ -33,28 +33,28 @@ export function TransactionParameters({
     walletAddress = "",
     canSimulate = false,
 }: TransactionParametersProps) {
-    // Transaction parameters
+    // transaction parameters
     const [usePendingBlock, setUsePendingBlock] = useState(true);
     const [blockNumber, setBlockNumber] = useState("");
     const [txIndex, setTxIndex] = useState("");
     const [fromAddress, setFromAddress] = useState(walletAddress);
-    const [gas, setGas] = useState("8000000");
+    const [gas, setGas] = useState("200000");
     const [useCustomGas, setUseCustomGas] = useState(false);
     const [gasPrice, setGasPrice] = useState("0");
     const [value, setValue] = useState("0");
 
-    // Block Header Overrides
+    // block header overrides
     const [blockOverridesExpanded, setBlockOverridesExpanded] = useState(true);
     const [overrideBlockNumber, setOverrideBlockNumber] = useState(false);
     const [overrideBlockNumberValue, setOverrideBlockNumberValue] = useState("");
     const [overrideTimestamp, setOverrideTimestamp] = useState(false);
     const [overrideTimestampValue, setOverrideTimestampValue] = useState("");
 
-    // State Overrides
+    // state overrides
     const [stateOverridesExpanded, setStateOverridesExpanded] = useState(true);
     const [stateOverrides, setStateOverrides] = useState<StateOverride[]>([]);
 
-    // Add new state override
+    // add new state override
     const addStateOverride = () => {
         setStateOverrides([
             ...stateOverrides,
@@ -67,12 +67,12 @@ export function TransactionParameters({
         ]);
     };
 
-    // Remove state override
+    // remove state override
     const removeStateOverride = (id: string) => {
         setStateOverrides(stateOverrides.filter((o) => o.id !== id));
     };
 
-    // Update state override
+    // update state override
     const updateStateOverride = (
         id: string,
         field: keyof StateOverride,
@@ -149,7 +149,7 @@ export function TransactionParameters({
                             onChange={(e) => setGas(e.target.value)}
                             disabled={!useCustomGas}
                             className="font-mono text-sm"
-                            placeholder="8000000"
+                            placeholder="200000"
                         />
                     </div>
                     <button
