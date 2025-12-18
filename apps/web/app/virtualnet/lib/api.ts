@@ -1,0 +1,189 @@
+/**
+ * API client for the Aptos Fork Simulator backend
+ */
+
+const API_BASE = process.env.NEXT_PUBLIC_SIM_API_URL || 'http://localhost:3001';
+
+export interface SessionConfig {
+    id: string;
+    network: 'movement-mainnet' | 'movement-testnet' | 'custom';
+    nodeUrl: string;
+    networkVersion?: number;
+    apiKey?: string;
+    createdAt: string;
+    ops: number;
+}
+
+export interface SessionDetail {
+    config: SessionConfig;
+    delta: Record<string, unknown>;
+    operations: string[];
+}
+
+export interface InitSessionParams {
+    network: 'movement-mainnet' | 'movement-testnet' | 'custom';
+    customUrl?: string;
+    networkVersion?: number;
+    apiKey?: string;
+}
+
+export interface InitSessionResponse {
+    success: boolean;
+    sessionId: string;
+    config: SessionConfig | null;
+    message?: string;
+    error?: string;
+}
+
+export interface FundAccountParams {
+    account: string;
+    amount: number;
+}
+
+export interface FundAccountResponse {
+    success: boolean;
+    account: string;
+    amount: number;
+    before: number;
+    after: number;
+    error?: string;
+}
+
+export interface ExecuteTransactionParams {
+    functionId: string;
+    typeArguments?: string[];
+    args?: string[];
+    sender?: string;
+}
+
+export interface ExecuteTransactionResponse {
+    success: boolean;
+    status: string;
+    gasUsed: number;
+    writeSet?: unknown[];
+    events?: unknown[];
+    error?: string;
+}
+
+export interface ViewFunctionParams {
+    functionId: string;
+    typeArguments?: string[];
+    args?: string[];
+}
+
+export interface ViewFunctionResponse {
+    success: boolean;
+    result?: unknown[];
+    gasUsed?: number;
+    error?: string;
+}
+
+export interface ViewResourceParams {
+    account: string;
+    resourceType: string;
+}
+
+export interface ViewResourceResponse {
+    success: boolean;
+    resource?: unknown;
+    error?: string;
+}
+
+// Helper for API requests
+async function apiRequest<T>(
+    path: string,
+    options: RequestInit = {}
+): Promise<T> {
+    const response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+        },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.error || 'API request failed');
+    }
+
+    return data as T;
+}
+
+// Session Management
+
+export async function listSessions(): Promise<{ sessions: SessionConfig[] }> {
+    return apiRequest('/sessions');
+}
+
+export async function getSession(sessionId: string): Promise<SessionDetail> {
+    return apiRequest(`/sessions/${sessionId}`);
+}
+
+export async function initSession(params: InitSessionParams): Promise<InitSessionResponse> {
+    return apiRequest('/sessions/init', {
+        method: 'POST',
+        body: JSON.stringify(params),
+    });
+}
+
+export async function deleteSession(sessionId: string): Promise<{ success: boolean }> {
+    return apiRequest(`/sessions/${sessionId}`, {
+        method: 'DELETE',
+    });
+}
+
+// Simulation Operations
+
+export async function fundAccount(
+    sessionId: string,
+    params: FundAccountParams
+): Promise<FundAccountResponse> {
+    return apiRequest(`/sessions/${sessionId}/fund`, {
+        method: 'POST',
+        body: JSON.stringify(params),
+    });
+}
+
+export async function executeTransaction(
+    sessionId: string,
+    params: ExecuteTransactionParams
+): Promise<ExecuteTransactionResponse> {
+    return apiRequest(`/sessions/${sessionId}/execute`, {
+        method: 'POST',
+        body: JSON.stringify(params),
+    });
+}
+
+// View Operations
+
+export async function viewFunction(
+    sessionId: string,
+    params: ViewFunctionParams
+): Promise<ViewFunctionResponse> {
+    return apiRequest(`/sessions/${sessionId}/view`, {
+        method: 'POST',
+        body: JSON.stringify(params),
+    });
+}
+
+export async function viewResource(
+    sessionId: string,
+    params: ViewResourceParams
+): Promise<ViewResourceResponse> {
+    const queryParams = new URLSearchParams({
+        account: params.account,
+        resourceType: params.resourceType,
+    });
+    return apiRequest(`/sessions/${sessionId}/resource?${queryParams}`);
+}
+
+// Health check
+export async function checkHealth(): Promise<{
+    status: string;
+    sessionsDir: string;
+    aptosCli: string;
+}> {
+    return apiRequest('/health');
+}

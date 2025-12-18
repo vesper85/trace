@@ -1,0 +1,22 @@
+{
+    "name": "sim-backend",
+    "version": "0.1.0",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "dev": "bun run --watch src/index.ts",
+        "build": "bun build src/index.ts --outdir dist --target node",
+        "start": "bun run src/index.ts",
+        "test": "bun test",
+        "check-types": "tsc --noEmit"
+    },
+    "dependencies": {
+        "elysia": "^1.2.12",
+        "@elysiajs/cors": "^1.2.0"
+    },
+    "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "@types/bun": "^1.2.5",
+        "typescript": "5.9.2"
+    }
+}

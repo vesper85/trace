@@ -80,7 +80,7 @@ export default function SimulatorContent() {
             // Check if this is a view function
             if (selectedFunction.is_view) {
                 // Import dynamically to avoid circular deps
-                const { callViewFunction, ViewInput } = await import("@/lib/movement");
+                const { callViewFunction } = await import("@/lib/movement");
 
                 const viewInput = {
                     contractAddress: contractAddress,
