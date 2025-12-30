@@ -11,8 +11,10 @@
         "check-types": "tsc --noEmit"
     },
     "dependencies": {
-        "elysia": "^1.2.12",
-        "@elysiajs/cors": "^1.2.0"
+        "@elysiajs/cors": "^1.2.0",
+        "@pythnetwork/hermes-client": "^2.1.0",
+        "@pythnetwork/pyth-aptos-js": "^1.5.0",
+        "elysia": "^1.2.12"
     },
     "devDependencies": {
         "@repo/typescript-config": "workspace:*",
