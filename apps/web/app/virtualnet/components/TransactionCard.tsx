@@ -1,8 +1,10 @@
 "use client";
 
-import { CheckCircle2, XCircle, Fuel, Clock, Code2 } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, XCircle, Fuel, Clock, Code2, ChevronDown, ChevronUp, Terminal } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export interface Transaction {
     id: string;
@@ -14,6 +16,8 @@ export interface Transaction {
     timestamp: string;
     typeArguments?: string[];
     args?: string[];
+    vmStatus?: string;
+    rawOutput?: string;
 }
 
 interface TransactionCardProps {
@@ -43,22 +47,23 @@ function parseFunctionId(functionId: string) {
 
 export function TransactionCard({ transaction, onClick }: TransactionCardProps) {
     const { address, module, func } = parseFunctionId(transaction.functionId);
+    const [showOutput, setShowOutput] = useState(false);
+    const hasOutput = transaction.rawOutput && transaction.rawOutput.trim().length > 0;
 
     return (
         <Card
-            className={`group cursor-pointer transition-all duration-200 hover:shadow-lg ${transaction.success
-                    ? "hover:border-green-500/50 hover:shadow-green-500/10"
-                    : "hover:border-red-500/50 hover:shadow-red-500/10"
+            className={`group transition-all duration-200 hover:shadow-lg ${transaction.success
+                ? "hover:border-green-500/50 hover:shadow-green-500/10"
+                : "hover:border-red-500/50 hover:shadow-red-500/10"
                 }`}
-            onClick={onClick}
         >
             <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-4 cursor-pointer" onClick={onClick}>
                     <div className="flex items-start gap-3 min-w-0">
                         <div
                             className={`p-2 rounded-lg shrink-0 ${transaction.success
-                                    ? "bg-green-500/10 text-green-500"
-                                    : "bg-red-500/10 text-red-500"
+                                ? "bg-green-500/10 text-green-500"
+                                : "bg-red-500/10 text-red-500"
                                 }`}
                         >
                             {transaction.success ? (
@@ -75,8 +80,13 @@ export function TransactionCard({ transaction, onClick }: TransactionCardProps) 
                                 </Badge>
                             </div>
                             <p className="text-xs text-muted-foreground font-mono truncate mt-1">
-                                {address.slice(0, 8)}...{address.slice(-6)}
+                                {address ? `${address.slice(0, 8)}...${address.slice(-6)}` : 'Unknown'}
                             </p>
+                            {transaction.vmStatus && transaction.vmStatus !== 'Executed' && (
+                                <p className={`text-xs mt-1 ${transaction.success ? 'text-green-500' : 'text-red-500'}`}>
+                                    {transaction.vmStatus}
+                                </p>
+                            )}
                         </div>
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
@@ -104,7 +114,31 @@ export function TransactionCard({ transaction, onClick }: TransactionCardProps) 
                             {transaction.sender.slice(0, 6)}...
                         </span>
                     </div>
+                    {hasOutput && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-auto h-6 px-2 text-xs gap-1"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowOutput(!showOutput);
+                            }}
+                        >
+                            <Terminal className="w-3 h-3" />
+                            Output
+                            {showOutput ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        </Button>
+                    )}
                 </div>
+
+                {/* CLI Output Section */}
+                {showOutput && hasOutput && (
+                    <div className="mt-3 pt-3 border-t">
+                        <pre className="text-xs font-mono bg-muted/50 p-3 rounded-lg overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap">
+                            {transaction.rawOutput}
+                        </pre>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );

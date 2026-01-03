@@ -8,21 +8,20 @@ import {
     RefreshCw,
     Loader2,
     Server,
-    Activity,
     Wallet,
     Plus,
+    Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { TransactionCard, type Transaction } from "../components/TransactionCard";
+import { OperationCard } from "../components/OperationCard";
+import { AccountCard } from "../components/AccountCard";
 import { SendTransactionModal, type TransactionResult } from "../components/SendTransactionModal";
-import { FundAccountPanel } from "../components/FundAccountPanel";
 import {
     getSession,
     type SessionConfig,
-    type SessionDetail,
+    type OperationContents,
+    type AccountInfo,
 } from "../lib/api";
 
 interface SessionPageProps {
@@ -45,9 +44,11 @@ export default function SessionPage({ params }: SessionPageProps) {
     const { sessionId } = use(params);
 
     const [session, setSession] = useState<SessionConfig | null>(null);
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [operations, setOperations] = useState<OperationContents[]>([]);
+    const [defaultAccount, setDefaultAccount] = useState<AccountInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [isSendModalOpen, setIsSendModalOpen] = useState(false);
 
     // Load session on mount
@@ -61,29 +62,14 @@ export default function SessionPage({ params }: SessionPageProps) {
         try {
             const detail = await getSession(sessionId);
             setSession(detail.config);
+            setDefaultAccount(detail.defaultAccount);
 
-            // Parse operations into transactions if available
+            // Set operations directly (now includes full contents)
             if (detail.operations && detail.operations.length > 0) {
-                const txs = detail.operations.map((op, index) => {
-                    // Try to parse operation if it's JSON
-                    let parsed: any = {};
-                    try {
-                        parsed = typeof op === 'string' ? JSON.parse(op) : op;
-                    } catch {
-                        parsed = { raw: op };
-                    }
-
-                    return {
-                        id: `tx-${index}`,
-                        functionId: parsed.functionId || parsed.function || `Operation ${index + 1}`,
-                        sender: parsed.sender || "unknown",
-                        success: parsed.success !== false,
-                        status: parsed.status || "Executed",
-                        gasUsed: parsed.gasUsed || 0,
-                        timestamp: parsed.timestamp || new Date().toISOString(),
-                    } as Transaction;
-                });
-                setTransactions(txs);
+                // Reverse to show newest first
+                setOperations([...detail.operations].reverse());
+            } else {
+                setOperations([]);
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to load session");
@@ -93,20 +79,19 @@ export default function SessionPage({ params }: SessionPageProps) {
     }
 
     const handleTransactionSuccess = (result: TransactionResult) => {
-        const newTx: Transaction = {
-            id: `tx-${Date.now()}`,
-            functionId: result.functionId,
-            sender: result.sender,
-            success: result.success,
-            status: result.status,
-            gasUsed: result.gasUsed,
-            timestamp: result.timestamp,
-            typeArguments: result.typeArguments,
-            args: result.args,
-        };
-        setTransactions(prev => [newTx, ...prev]);
+        // Show success message
+        const funcParts = result.functionId.split('::');
+        const funcName = funcParts[funcParts.length - 1] || result.functionId;
+        setSuccessMessage(
+            result.success
+                ? `✓ Transaction "${funcName}" executed successfully (${result.gasUsed} gas)`
+                : `✗ Transaction "${funcName}" failed: ${result.status}`
+        );
 
-        // Refresh session to get updated ops count
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => setSuccessMessage(null), 5000);
+
+        // Refresh session to get updated operations
         loadSession();
     };
 
@@ -212,28 +197,48 @@ export default function SessionPage({ params }: SessionPageProps) {
                 </div>
             )}
 
+            {/* Success Message Banner */}
+            {successMessage && (
+                <div className="container mx-auto px-6 mt-4">
+                    <div className={`flex items-center gap-2 px-4 py-3 rounded-lg border ${successMessage.startsWith('✓')
+                        ? 'bg-green-500/10 text-green-500 border-green-500/20'
+                        : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                        }`}>
+                        <span className="text-sm">{successMessage}</span>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-auto h-6 px-2"
+                            onClick={() => setSuccessMessage(null)}
+                        >
+                            Dismiss
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             {/* Main Content */}
             <main className="container mx-auto px-6 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Transactions List - Main Area */}
+                    {/* Operations List - Main Area */}
                     <div className="lg:col-span-2 space-y-4">
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold flex items-center gap-2">
-                                <Activity className="w-5 h-5" />
-                                Transactions
+                                <Layers className="w-5 h-5" />
+                                Operations
                             </h2>
                             <span className="text-sm text-muted-foreground">
-                                {transactions.length} total
+                                {operations.length} total
                             </span>
                         </div>
 
-                        {transactions.length === 0 ? (
+                        {operations.length === 0 ? (
                             <Card>
                                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                                     <div className="p-4 rounded-2xl bg-muted/50 mb-4">
                                         <Send className="w-10 h-10 text-muted-foreground" />
                                     </div>
-                                    <h3 className="text-lg font-semibold mb-2">No Transactions Yet</h3>
+                                    <h3 className="text-lg font-semibold mb-2">No Operations Yet</h3>
                                     <p className="text-muted-foreground max-w-sm mb-6">
                                         Start simulating transactions on this fork to see them appear here.
                                     </p>
@@ -248,8 +253,8 @@ export default function SessionPage({ params }: SessionPageProps) {
                             </Card>
                         ) : (
                             <div className="space-y-3">
-                                {transactions.map((tx) => (
-                                    <TransactionCard key={tx.id} transaction={tx} />
+                                {operations.map((op) => (
+                                    <OperationCard key={op.name} operation={op} />
                                 ))}
                             </div>
                         )}
@@ -280,22 +285,16 @@ export default function SessionPage({ params }: SessionPageProps) {
                             </CardContent>
                         </Card>
 
-                        {/* Fund Account */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base flex items-center gap-2">
-                                    <Wallet className="w-4 h-4" />
-                                    Fund Account
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <FundAccountPanel
-                                    session={session}
-                                    onSuccess={loadSession}
-                                    onError={handleTransactionError}
-                                />
-                            </CardContent>
-                        </Card>
+                        {/* Account Card */}
+                        {defaultAccount && (
+                            <AccountCard
+                                address={defaultAccount.address}
+                                balance={defaultAccount.balance}
+                                session={session}
+                                onFundSuccess={loadSession}
+                                onError={handleTransactionError}
+                            />
+                        )}
                     </div>
                 </div>
             </main>

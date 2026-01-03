@@ -105,23 +105,68 @@ export const simulateRoutes = new Elysia({ prefix: '/sessions/:sessionId' })
         let txGasUsed = 0;
         let txWriteSet: unknown = undefined;
         let txEvents: unknown = undefined;
+        let vmStatus: string | undefined = undefined;
+
+        // Parse the CLI output - it may be text or JSON
+        const stdout = result.stdout || '';
+        const stderr = result.stderr || '';
+
+        // Check for common failure patterns in output
+        if (stderr.includes('error') || stderr.includes('Error') ||
+            stdout.includes('ABORTED') || stdout.includes('OUT_OF_GAS') ||
+            stdout.includes('EXECUTION_FAILURE')) {
+            txSuccess = false;
+            txStatus = 'Failed';
+        }
 
         if (!result.success) {
             txSuccess = false;
             txStatus = 'Failed';
         } else {
-            // Try to parse the output
+            // Try to parse JSON output
             try {
-                const match = result.stdout.match(/\{[\s\S]*\}/);
+                const match = stdout.match(/\{[\s\S]*\}/);
                 if (match) {
                     const parsed = JSON.parse(match[0]);
-                    txStatus = parsed.status || 'Executed';
-                    txGasUsed = parsed.gas_used || 0;
-                    txWriteSet = parsed.write_set;
-                    txEvents = parsed.events;
+
+                    // CLI output structure: { "Result": { "gas_used": 90, "vm_status": "...", ... } }
+                    const resultData = parsed.Result || parsed.result || parsed;
+
+                    // Extract values from the Result object
+                    txGasUsed = parseInt(resultData.gas_used) || parseInt(resultData.gasUsed) || 0;
+                    vmStatus = resultData.vm_status || resultData.vmStatus;
+                    txWriteSet = resultData.write_set || resultData.changes;
+                    txEvents = resultData.events;
+
+                    // Check success from Result
+                    if (resultData.success !== undefined) {
+                        txSuccess = resultData.success === true;
+                    }
+
+                    // Parse VM status for success/failure
+                    if (vmStatus) {
+                        txStatus = vmStatus;
+                        // Check for success patterns
+                        if (vmStatus.includes('EXECUTED') || vmStatus.includes('success')) {
+                            txSuccess = true;
+                            txStatus = 'Executed';
+                        } else if (vmStatus.includes('ABORT') || vmStatus.includes('fail')) {
+                            txSuccess = false;
+                            txStatus = vmStatus;
+                        }
+                    }
                 }
             } catch {
-                // Fallback - keep default values
+                // Try to extract info from text output
+                const gasMatch = stdout.match(/gas[_\s]?used[:\s]+(\d+)/i);
+                if (gasMatch && gasMatch[1]) {
+                    txGasUsed = parseInt(gasMatch[1]) || 0;
+                }
+
+                const statusMatch = stdout.match(/status[:\s]+([^\n]+)/i);
+                if (statusMatch && statusMatch[1]) {
+                    txStatus = statusMatch[1].trim();
+                }
             }
         }
 
@@ -144,16 +189,21 @@ export const simulateRoutes = new Elysia({ prefix: '/sessions/:sessionId' })
             return {
                 success: false,
                 error: 'Failed to execute transaction',
-                details: result.stderr || result.stdout,
+                details: stderr || stdout,
+                stdout: stdout,
+                stderr: stderr,
             };
         }
 
         return {
-            success: true,
+            success: txSuccess,
             status: txStatus,
             gasUsed: txGasUsed,
             writeSet: txWriteSet,
             events: txEvents,
+            vmStatus: vmStatus,
+            // Include raw output for debugging/display
+            rawOutput: stdout,
         };
     }, {
         params: t.Object({

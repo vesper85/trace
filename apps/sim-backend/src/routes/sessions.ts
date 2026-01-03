@@ -7,8 +7,10 @@ import {
     initSession,
     readSessionDelta,
     listSessionOperations,
+    readOperationContents,
     deleteSession,
     getSessionDefaultAccount,
+    getAccountBalance,
 } from '../lib/cli';
 import {
     createSession as createSessionInDb,
@@ -70,10 +72,22 @@ export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
 
         // Get delta and operations from disk (CLI-managed)
         const delta = await readSessionDelta(sessionId);
-        const operations = await listSessionOperations(sessionId);
+        const operationNames = await listSessionOperations(sessionId);
+
+        // Read full operation contents for each operation
+        const operations = await Promise.all(
+            operationNames.map(opName => readOperationContents(sessionId, opName))
+        );
 
         // Get transactions from database
         const transactions = await getSessionTransactions(sessionId);
+
+        // Get default account and balance
+        const defaultAccount = await getSessionDefaultAccount(sessionId);
+        let accountBalance = 0;
+        if (defaultAccount) {
+            accountBalance = await getAccountBalance(sessionId, defaultAccount);
+        }
 
         return {
             config: {
@@ -98,6 +112,10 @@ export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
                 typeArguments: tx.typeArguments,
                 args: tx.args,
             })),
+            defaultAccount: defaultAccount ? {
+                address: defaultAccount,
+                balance: accountBalance,
+            } : null,
         };
     }, {
         params: t.Object({

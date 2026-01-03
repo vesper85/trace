@@ -7,7 +7,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { CLIResult, Network, SessionConfig } from './types';
+import type { CLIResult, Network, SessionConfig, OperationContents, OperationSummary, OperationEvent, ResourceChange } from './types';
 
 // Default sessions directory
 const SESSIONS_DIR = process.env.APTOS_SIM_SESSIONS_DIR || '/tmp/aptos-sim-sessions';
@@ -193,6 +193,63 @@ export async function getSessionDefaultAccount(sessionId: string): Promise<strin
 }
 
 /**
+ * Gets account balance from the session's delta.json
+ * Looks for CoinStore<AptosCoin> resource for the account
+ */
+export async function getAccountBalance(sessionId: string, account: string): Promise<number> {
+    try {
+        const delta = await readSessionDelta(sessionId);
+
+        // Normalize account address (remove 0x prefix for matching)
+        const normalizedAccount = account.replace(/^0x/, '').toLowerCase();
+
+        // Look for CoinStore resource in delta
+        // Format: "resource::0xcc26c1...::0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
+        for (const key of Object.keys(delta)) {
+            if (key.includes(normalizedAccount) && key.includes('CoinStore') && key.includes('aptos_coin::AptosCoin')) {
+                // The value is a hex-encoded BCS serialized resource
+                // For now, we'll get the balance from fund operations instead
+                break;
+            }
+        }
+
+        // Get balance from fund operations - more reliable
+        const operations = await listSessionOperations(sessionId);
+        let totalBalance = 0;
+
+        for (const opName of operations) {
+            if (opName.includes('fund')) {
+                const opContents = await readOperationContents(sessionId, opName);
+                // Check if this is a fund operation for our account
+                const fundData = (opContents.summary as Record<string, unknown>)?.fund_fungible as { account?: string; after?: number } | undefined;
+                if (fundData?.account) {
+                    const fundAccount = fundData.account.replace(/^0x/, '').toLowerCase();
+                    if (fundAccount === normalizedAccount && fundData.after !== undefined) {
+                        totalBalance = fundData.after;
+                    }
+                }
+            }
+        }
+
+        // Now subtract gas used from execute operations for this account
+        for (const opName of operations) {
+            if (opName.includes('execute')) {
+                const opContents = await readOperationContents(sessionId, opName);
+                const execData = opContents.summary?.execute_transaction;
+                if (execData?.fee_statement) {
+                    // Each execution costs storage_fee_octas from the account balance
+                    totalBalance -= execData.fee_statement.storage_fee_octas;
+                }
+            }
+        }
+
+        return Math.max(0, totalBalance);
+    } catch {
+        return 0;
+    }
+}
+
+/**
  * Funds an account in a session
  */
 export async function fundAccount(
@@ -348,10 +405,79 @@ export async function listSessionOperations(sessionId: string): Promise<string[]
         return entries
             .filter(entry => entry.isDirectory() && entry.name.startsWith('['))
             .map(entry => entry.name)
-            .sort();
+            .sort((a, b) => {
+                // Extract numeric index from "[N] ..." format
+                const aMatch = a.match(/^\[(\d+)\]/);
+                const bMatch = b.match(/^\[(\d+)\]/);
+                const aIndex = aMatch?.[1] ? parseInt(aMatch[1], 10) : 0;
+                const bIndex = bMatch?.[1] ? parseInt(bMatch[1], 10) : 0;
+                return aIndex - bIndex;
+            });
     } catch {
         return [];
     }
+}
+
+/**
+ * Reads the contents of an operation directory (summary.json, events.json, write_set.json)
+ */
+export async function readOperationContents(
+    sessionId: string,
+    opName: string
+): Promise<OperationContents> {
+    const sessionPath = getSessionPath(sessionId);
+    const opPath = path.join(sessionPath, opName);
+
+    // Parse operation name to extract index and type
+    // Format: "[0] fund (account)" or "[1] execute 0x6a16...::pool::lend"
+    const indexMatch = opName.match(/^\[(\d+)\]/);
+    const index = indexMatch?.[1] ? parseInt(indexMatch[1], 10) : -1;
+
+    let operationType: 'execute' | 'fund' | 'unknown' = 'unknown';
+    if (opName.includes('execute')) {
+        operationType = 'execute';
+    } else if (opName.includes('fund')) {
+        operationType = 'fund';
+    }
+
+    // Read summary.json
+    let summary: OperationSummary | null = null;
+    try {
+        const summaryPath = path.join(opPath, 'summary.json');
+        const content = await fs.readFile(summaryPath, 'utf-8');
+        summary = JSON.parse(content);
+    } catch {
+        // Summary file may not exist for all operations
+    }
+
+    // Read events.json
+    let events: OperationEvent[] = [];
+    try {
+        const eventsPath = path.join(opPath, 'events.json');
+        const content = await fs.readFile(eventsPath, 'utf-8');
+        events = JSON.parse(content);
+    } catch {
+        // Events file may not exist
+    }
+
+    // Read write_set.json
+    let writeSet: Record<string, ResourceChange> = {};
+    try {
+        const writeSetPath = path.join(opPath, 'write_set.json');
+        const content = await fs.readFile(writeSetPath, 'utf-8');
+        writeSet = JSON.parse(content);
+    } catch {
+        // Write set file may not exist
+    }
+
+    return {
+        name: opName,
+        index,
+        operationType,
+        summary,
+        events,
+        writeSet,
+    };
 }
 
 /**

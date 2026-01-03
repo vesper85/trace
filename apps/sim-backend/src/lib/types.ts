@@ -143,3 +143,67 @@ export interface ViewResourceResponse {
     resource?: unknown;
     error?: string;
 }
+
+/**
+ * Fee statement from transaction execution
+ */
+export interface FeeStatement {
+    total_charge_gas_units: number;
+    execution_gas_units: number;
+    io_gas_units: number;
+    storage_fee_octas: number;
+    storage_fee_refund_octas: number;
+}
+
+/**
+ * Operation summary from summary.json
+ */
+export interface OperationSummary {
+    execute_transaction?: {
+        status: { Keep: string } | { Abort: string };
+        gas_used: number;
+        fee_statement: FeeStatement;
+    };
+    fund_fungible?: {
+        account: string;
+        amount: number;
+        before: number;
+        after: number;
+    };
+}
+
+/**
+ * Operation event (V1 or V2 format)
+ */
+export interface OperationEvent {
+    V1?: {
+        key: { creation_number: number; account_address: string };
+        sequence_number: number;
+        type_tag: string;
+        event_data: Record<string, unknown>;
+    };
+    V2?: {
+        type_tag: string;
+        event_data: Record<string, unknown>;
+    };
+}
+
+/**
+ * Resource write/delete operation
+ */
+export interface ResourceChange {
+    write?: { data: Record<string, unknown> };
+    delete?: boolean;
+}
+
+/**
+ * Full operation contents from the 3 operation files
+ */
+export interface OperationContents {
+    name: string;
+    index: number;
+    operationType: 'execute' | 'fund' | 'unknown';
+    summary: OperationSummary | null;
+    events: OperationEvent[];
+    writeSet: Record<string, ResourceChange>;
+}
