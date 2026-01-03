@@ -1,11 +1,14 @@
 /**
  * Aptos Fork Simulator Backend
  * 
- * A Bun/Elysia server that wraps the aptos move sim CLI
+ * A Node.js/Elysia server that wraps the aptos move sim CLI
  * to provide a REST API for fork-based transaction simulation.
  */
 
+import 'dotenv/config';
+
 import { Elysia } from 'elysia';
+import { node } from '@elysiajs/node';
 import { cors } from '@elysiajs/cors';
 import { sessionsRoutes } from './routes/sessions';
 import { simulateRoutes } from './routes/simulate';
@@ -17,7 +20,7 @@ const PORT = parseInt(process.env.PORT || '3001');
 // Ensure sessions directory exists on startup
 await ensureSessionsDir();
 
-const app = new Elysia()
+const app = new Elysia({ adapter: node() })
     // Enable CORS for frontend access
     .use(cors({
         origin: /localhost:\d+$/,

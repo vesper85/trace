@@ -8,13 +8,14 @@
         "skipLibCheck": true,
         "esModuleInterop": true,
         "types": [
-            "bun"
+            "bun-types",
+            "node"
         ],
-        "outDir": "dist",
-        "rootDir": "src"
+        "outDir": "dist"
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "drizzle.config.ts"
     ],
     "exclude": [
         "node_modules",

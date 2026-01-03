@@ -5,10 +5,9 @@
  * for the fork simulation session.
  */
 
-import { spawn } from 'bun';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { CLIResult, Network, NETWORK_URLS, SessionConfig } from './types';
+import type { CLIResult, Network, SessionConfig } from './types';
 
 // Default sessions directory
 const SESSIONS_DIR = process.env.APTOS_SIM_SESSIONS_DIR || '/tmp/aptos-sim-sessions';
@@ -48,18 +47,22 @@ export async function listSessionIds(): Promise<string[]> {
 }
 
 /**
- * Executes an aptos CLI command
+ * Executes a command and returns the result
  */
-export async function runAptosCLI(args: string[]): Promise<CLIResult> {
+async function execCommand(cmd: string, args: string[], options?: { cwd?: string; env?: Record<string, string | undefined> }): Promise<CLIResult> {
     try {
-        const proc = spawn({
-            cmd: [APTOS_CLI, ...args],
+        const proc = Bun.spawn([cmd, ...args], {
+            cwd: options?.cwd,
+            env: options?.env || process.env,
             stdout: 'pipe',
             stderr: 'pipe',
         });
 
-        const stdout = await new Response(proc.stdout).text();
-        const stderr = await new Response(proc.stderr).text();
+        const [stdout, stderr] = await Promise.all([
+            new Response(proc.stdout).text(),
+            new Response(proc.stderr).text(),
+        ]);
+
         const exitCode = await proc.exited;
 
         return {
@@ -72,10 +75,17 @@ export async function runAptosCLI(args: string[]): Promise<CLIResult> {
         return {
             success: false,
             stdout: '',
-            stderr: error instanceof Error ? error.message : 'Unknown error',
+            stderr: error instanceof Error ? error.message : String(error),
             exitCode: 1,
         };
     }
+}
+
+/**
+ * Executes an aptos CLI command
+ */
+export async function runAptosCLI(args: string[]): Promise<CLIResult> {
+    return execCommand(APTOS_CLI, args);
 }
 
 /**
@@ -142,10 +152,7 @@ export async function initSessionProfile(sessionId: string, nodeUrl: string): Pr
 
     // Run with both APTOS_CONFIG and MOVEMENT_CONFIG set
     // Movement CLI uses MOVEMENT_CONFIG, Aptos CLI uses APTOS_CONFIG
-    const proc = spawn({
-        cmd: [APTOS_CLI, ...args],
-        stdout: 'pipe',
-        stderr: 'pipe',
+    return execCommand(APTOS_CLI, args, {
         cwd: sessionPath,
         env: {
             ...process.env,
@@ -153,17 +160,6 @@ export async function initSessionProfile(sessionId: string, nodeUrl: string): Pr
             MOVEMENT_CONFIG: path.join(movementConfigDir, 'config.yaml'),
         },
     });
-
-    const stdout = await new Response(proc.stdout).text();
-    const stderr = await new Response(proc.stderr).text();
-    const exitCode = await proc.exited;
-
-    return {
-        success: exitCode === 0,
-        stdout,
-        stderr,
-        exitCode,
-    };
 }
 
 /**
@@ -256,10 +252,7 @@ export async function executeTransaction(
     }
 
     // Run with both APTOS_CONFIG and MOVEMENT_CONFIG set to the session's config
-    const proc = spawn({
-        cmd: [APTOS_CLI, ...cliArgs],
-        stdout: 'pipe',
-        stderr: 'pipe',
+    return execCommand(APTOS_CLI, cliArgs, {
         cwd: sessionPath,
         env: {
             ...process.env,
@@ -267,17 +260,6 @@ export async function executeTransaction(
             MOVEMENT_CONFIG: movementConfigPath,
         },
     });
-
-    const stdout = await new Response(proc.stdout).text();
-    const stderr = await new Response(proc.stderr).text();
-    const exitCode = await proc.exited;
-
-    return {
-        success: exitCode === 0,
-        stdout,
-        stderr,
-        exitCode,
-    };
 }
 
 /**

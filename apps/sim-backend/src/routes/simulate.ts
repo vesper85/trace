@@ -9,6 +9,7 @@ import {
     readSessionConfig,
     getSessionDefaultAccount,
 } from '../lib/cli';
+import { recordTransaction, getSessionById } from '../lib/db';
 import type { FundAccountRequest, ExecuteTransactionRequest } from '../lib/types';
 
 export const simulateRoutes = new Elysia({ prefix: '/sessions/:sessionId' })
@@ -77,9 +78,9 @@ export const simulateRoutes = new Elysia({ prefix: '/sessions/:sessionId' })
         const { sessionId } = params;
         const { functionId, typeArguments, args, sender } = body as ExecuteTransactionRequest;
 
-        // Check session exists
-        const config = await readSessionConfig(sessionId);
-        if (!config) {
+        // Check session exists in database
+        const dbSession = await getSessionById(sessionId);
+        if (!dbSession) {
             set.status = 404;
             return { error: 'Session not found' };
         }
@@ -99,36 +100,60 @@ export const simulateRoutes = new Elysia({ prefix: '/sessions/:sessionId' })
             senderAccount
         );
 
+        let txSuccess = result.success;
+        let txStatus = 'Executed';
+        let txGasUsed = 0;
+        let txWriteSet: unknown = undefined;
+        let txEvents: unknown = undefined;
+
+        if (!result.success) {
+            txSuccess = false;
+            txStatus = 'Failed';
+        } else {
+            // Try to parse the output
+            try {
+                const match = result.stdout.match(/\{[\s\S]*\}/);
+                if (match) {
+                    const parsed = JSON.parse(match[0]);
+                    txStatus = parsed.status || 'Executed';
+                    txGasUsed = parsed.gas_used || 0;
+                    txWriteSet = parsed.write_set;
+                    txEvents = parsed.events;
+                }
+            } catch {
+                // Fallback - keep default values
+            }
+        }
+
+        // Record transaction in database
+        await recordTransaction({
+            sessionId: sessionId,
+            functionId: functionId,
+            sender: senderAccount || 'unknown',
+            success: txSuccess,
+            status: txStatus,
+            gasUsed: txGasUsed,
+            typeArguments: typeArguments,
+            args: args,
+            events: txEvents,
+            writeSet: txWriteSet,
+        });
+
         if (!result.success) {
             set.status = 500;
             return {
+                success: false,
                 error: 'Failed to execute transaction',
                 details: result.stderr || result.stdout,
             };
         }
 
-        // Try to parse the output
-        try {
-            const match = result.stdout.match(/\{[\s\S]*\}/);
-            if (match) {
-                const parsed = JSON.parse(match[0]);
-                return {
-                    success: true,
-                    status: parsed.status || 'Executed',
-                    gasUsed: parsed.gas_used || 0,
-                    writeSet: parsed.write_set,
-                    events: parsed.events,
-                };
-            }
-        } catch {
-            // Fallback
-        }
-
         return {
             success: true,
-            status: 'Executed',
-            gasUsed: 0,
-            rawOutput: result.stdout,
+            status: txStatus,
+            gasUsed: txGasUsed,
+            writeSet: txWriteSet,
+            events: txEvents,
         };
     }, {
         params: t.Object({

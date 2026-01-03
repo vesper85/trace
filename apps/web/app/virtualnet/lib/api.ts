@@ -6,6 +6,7 @@ const API_BASE = process.env.NEXT_PUBLIC_SIM_API_URL || 'http://localhost:3001';
 
 export interface SessionConfig {
     id: string;
+    name?: string;
     network: 'movement-mainnet' | 'movement-testnet' | 'custom';
     nodeUrl: string;
     networkVersion?: number;
@@ -21,6 +22,7 @@ export interface SessionDetail {
 }
 
 export interface InitSessionParams {
+    name?: string;
     network: 'movement-mainnet' | 'movement-testnet' | 'custom';
     customUrl?: string;
     networkVersion?: number;

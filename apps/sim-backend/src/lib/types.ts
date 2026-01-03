@@ -23,6 +23,7 @@ export const NETWORK_URLS: Record<Exclude<Network, 'custom'>, string> = {
  */
 export interface SessionConfig {
     id: string;
+    name?: string;
     network: Network;
     nodeUrl: string;
     networkVersion?: number;

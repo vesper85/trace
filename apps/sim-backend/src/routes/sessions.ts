@@ -4,16 +4,29 @@
 
 import { Elysia, t } from 'elysia';
 import {
-    listSessionIds,
     initSession,
-    readSessionConfig,
     readSessionDelta,
     listSessionOperations,
     deleteSession,
-    getSessionPath,
     getSessionDefaultAccount,
 } from '../lib/cli';
-import { NETWORK_URLS, type Network, type SessionConfig, type InitSessionRequest } from '../lib/types';
+import {
+    createSession as createSessionInDb,
+    getSessionById,
+    listAllSessions,
+    deleteSessionFromDb,
+    getSessionTransactions,
+} from '../lib/db';
+import { NETWORK_URLS, type Network, type SessionConfig } from '../lib/types';
+
+// Extended request type with name field
+interface InitSessionRequest {
+    name?: string;
+    network: Network;
+    customUrl?: string;
+    networkVersion?: number;
+    apiKey?: string;
+}
 
 // Generate a unique session ID
 function generateSessionId(): string {
@@ -23,20 +36,22 @@ function generateSessionId(): string {
 }
 
 export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
-    // List all sessions
+    // List all sessions - from database
     .get('/', async () => {
-        const sessionIds = await listSessionIds();
-        const sessions: SessionConfig[] = [];
+        const dbSessions = await listAllSessions();
 
-        for (const id of sessionIds) {
-            const config = await readSessionConfig(id);
-            if (config) {
-                sessions.push({
-                    id,
-                    ...(config as Omit<SessionConfig, 'id'>),
-                });
-            }
-        }
+        // Map database records to SessionConfig format
+        // Convert null to undefined and Date to string for type compatibility
+        const sessions: SessionConfig[] = dbSessions.map(s => ({
+            id: s.id,
+            name: s.name,
+            network: s.network,
+            nodeUrl: s.nodeUrl,
+            networkVersion: s.networkVersion ?? undefined,
+            apiKey: s.apiKey ?? undefined,
+            createdAt: s.createdAt.toISOString(),
+            ops: s.ops,
+        }));
 
         return { sessions };
     })
@@ -44,20 +59,45 @@ export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
     // Get session details
     .get('/:sessionId', async ({ params, set }) => {
         const { sessionId } = params;
-        const config = await readSessionConfig(sessionId);
 
-        if (!config) {
+        // Get from database first
+        const dbSession = await getSessionById(sessionId);
+
+        if (!dbSession) {
             set.status = 404;
             return { error: 'Session not found' };
         }
 
+        // Get delta and operations from disk (CLI-managed)
         const delta = await readSessionDelta(sessionId);
         const operations = await listSessionOperations(sessionId);
 
+        // Get transactions from database
+        const transactions = await getSessionTransactions(sessionId);
+
         return {
-            config: { id: sessionId, ...(config as Omit<SessionConfig, 'id'>) },
+            config: {
+                id: dbSession.id,
+                name: dbSession.name,
+                network: dbSession.network,
+                nodeUrl: dbSession.nodeUrl,
+                networkVersion: dbSession.networkVersion,
+                createdAt: dbSession.createdAt,
+                ops: dbSession.ops,
+            },
             delta,
             operations,
+            transactions: transactions.map(tx => ({
+                id: tx.id,
+                functionId: tx.functionId,
+                sender: tx.sender,
+                success: tx.success,
+                status: tx.status,
+                gasUsed: tx.gasUsed,
+                timestamp: tx.createdAt,
+                typeArguments: tx.typeArguments,
+                args: tx.args,
+            })),
         };
     }, {
         params: t.Object({
@@ -67,7 +107,7 @@ export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
 
     // Initialize a new session
     .post('/init', async ({ body, set }) => {
-        const { network, customUrl, networkVersion, apiKey } = body as InitSessionRequest;
+        const { name, network, customUrl, networkVersion, apiKey } = body as InitSessionRequest;
 
         // Determine the node URL
         let nodeUrl: string;
@@ -82,8 +122,9 @@ export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
 
         // Generate session ID
         const sessionId = generateSessionId();
+        const sessionName = name || `Session ${sessionId.slice(5, 13)}`;
 
-        // Initialize the session using CLI
+        // Initialize the session using CLI (creates disk-based session)
         const result = await initSession(sessionId, network, nodeUrl, networkVersion, apiKey);
 
         if (!result.success) {
@@ -94,8 +135,21 @@ export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
             };
         }
 
-        // Read back the config
-        const config = await readSessionConfig(sessionId);
+        // Save session to database
+        const dbSession = await createSessionInDb({
+            id: sessionId,
+            name: sessionName,
+            network,
+            nodeUrl: nodeUrl,
+            networkVersion: networkVersion,
+            apiKey: apiKey,
+            ops: 0,
+        });
+
+        if (!dbSession) {
+            // CLI session was created but DB failed - continue anyway
+            console.error('Warning: Failed to save session to database');
+        }
 
         // Get the default account from the session's profile
         const defaultAccount = await getSessionDefaultAccount(sessionId);
@@ -103,12 +157,21 @@ export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
         return {
             success: true,
             sessionId,
-            defaultAccount,  // The address to use for funding and transactions
-            config: config ? { id: sessionId, ...(config as Omit<SessionConfig, 'id'>) } : null,
+            defaultAccount,
+            config: {
+                id: sessionId,
+                name: sessionName,
+                network,
+                nodeUrl,
+                networkVersion,
+                createdAt: dbSession?.createdAt || new Date().toISOString(),
+                ops: 0,
+            },
             message: result.stdout,
         };
     }, {
         body: t.Object({
+            name: t.Optional(t.String()),
             network: t.Union([
                 t.Literal('movement-mainnet'),
                 t.Literal('movement-testnet'),
@@ -124,16 +187,24 @@ export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
     .delete('/:sessionId', async ({ params, set }) => {
         const { sessionId } = params;
 
-        const config = await readSessionConfig(sessionId);
-        if (!config) {
+        // Check if session exists in database
+        const dbSession = await getSessionById(sessionId);
+        if (!dbSession) {
             set.status = 404;
             return { error: 'Session not found' };
         }
 
-        const deleted = await deleteSession(sessionId);
-        if (!deleted) {
+        // Delete from disk (CLI session files)
+        const deletedFromDisk = await deleteSession(sessionId);
+        if (!deletedFromDisk) {
+            console.error('Warning: Failed to delete session from disk');
+        }
+
+        // Delete from database
+        const deletedFromDb = await deleteSessionFromDb(sessionId);
+        if (!deletedFromDb) {
             set.status = 500;
-            return { error: 'Failed to delete session' };
+            return { error: 'Failed to delete session from database' };
         }
 
         return { success: true };
