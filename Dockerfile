@@ -3,17 +3,23 @@ FROM oven/bun:1
 
 WORKDIR /app
 
-# Copy package files first for better caching
+# Copy workspace configuration files
+COPY package.json pnpm-workspace.yaml ./
+
+# Copy the typescript-config package (workspace dependency)
+COPY packages/typescript-config ./packages/typescript-config/
+
+# Copy sim-backend package files
 COPY apps/sim-backend/package.json ./apps/sim-backend/
 COPY apps/sim-backend/bun.lock* ./apps/sim-backend/
 
-WORKDIR /app/apps/sim-backend
-
-# Install dependencies
+# Install dependencies from root
 RUN bun install --frozen-lockfile || bun install
 
-# Copy source code
-COPY apps/sim-backend/. .
+# Copy sim-backend source code
+COPY apps/sim-backend/. ./apps/sim-backend/
+
+WORKDIR /app/apps/sim-backend
 
 # Generate Drizzle migrations if needed
 RUN bun run db:generate || true
