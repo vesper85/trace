@@ -1,0 +1,24 @@
+{
+    "extends": "@repo/typescript-config/base.json",
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "strict": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "types": [
+            "bun-types",
+            "node"
+        ],
+        "outDir": "dist"
+    },
+    "include": [
+        "src/**/*",
+        "drizzle.config.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

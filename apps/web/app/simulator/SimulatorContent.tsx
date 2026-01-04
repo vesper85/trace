@@ -79,7 +79,7 @@ export default function SimulatorContent() {
         try {
             // check if this is a view function
             if (selectedFunction.is_view) {
-                // import dynamically to avoid circular deps
+                // Import dynamically to avoid circular deps
                 const { callViewFunction } = await import("@/lib/movement");
 
                 const viewInput = {
@@ -168,10 +168,26 @@ export default function SimulatorContent() {
     );
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden">
+        <div className="flex flex-col h-screen overflow-hidden bg-background">
             {/* Header */}
-            <header className="flex-none flex h-14 items-center justify-between border-b bg-background px-6">
-                <h1 className="text-lg font-semibold">Transaction Simulator</h1>
+            <header className="flex-none flex items-center justify-between border-b bg-background/80 backdrop-blur-xl px-6 py-4">
+                <div className="flex items-center gap-4">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10">
+                        <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                            <line x1="8" y1="21" x2="16" y2="21" />
+                            <line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                            Transaction Simulator
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Simulate transactions on Movement network
+                        </p>
+                    </div>
+                </div>
                 <WalletButton />
             </header>
 

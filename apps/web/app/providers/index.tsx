@@ -9,5 +9,7 @@ const WalletProviderInner = dynamic(() => import("./WalletProvider"), {
 });
 
 export function WalletProvider({ children }: PropsWithChildren) {
-    return <WalletProviderInner>{ children } </WalletProviderInner>;
+    return <WalletProviderInner>{children} </WalletProviderInner>;
 }
+
+export { QueryProvider } from "./QueryProvider";

@@ -331,72 +331,8 @@ export function ContractBlock({
                 <h2 className="text-lg font-semibold">Contract</h2>
             </div>
 
-
-            {/* Test button - uses a generated account to properly simulate */}
-            <Button onClick={async () => {
-                try {
-                    // Import Account to generate a valid simulation account
-                    const { Account } = await import("@aptos-labs/ts-sdk");
-                    
-                    // Generate a simulation account - its public key will match its address
-                    const simulationAccount = Account.generate();
-                    
-                    const transaction = await movement.transaction.build.simple({
-                        data: {
-                            function: "0x6a164188af7bb6a8268339343a5afe0242292713709af8801dafba3a054dc2f2::pool::lend",
-                            functionArguments: [0, 100000, true],
-                            typeArguments: ["0x1::aptos_coin::AptosCoin"]
-                        },
-                        // Use the simulation account's address so public key matches
-                        sender: simulationAccount.accountAddress.toString(),
-                        options: {
-                            // Use sequence number 0 for newly generated accounts
-                            // This allows simulation without the account existing on chain
-                            accountSequenceNumber: 0,
-                        },
-                    })
-
-                    // Provide the matching public key for simulation
-                    const sim = await movement.transaction.simulate.simple({
-                        transaction,
-                        signerPublicKey: simulationAccount.publicKey,
-                    })
-                    console.log("Simulation successful:", sim)
-                } catch (error) {
-                    console.log("Simulation error:", error)
-                }
-
-            }}>
-                test
-            </Button>
-
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
-                {/* Address Mode Selection */}
-                <div className="flex items-center gap-6">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="radio"
-                            name="addressMode"
-                            checked={addressMode === "project"}
-                            onChange={() => setAddressMode("project")}
-                            className="w-4 h-4 text-primary border-muted-foreground focus:ring-primary accent-primary"
-                        />
-                        <span className="text-sm">Select from Project</span>
-                        <Info className="w-4 h-4 text-muted-foreground" />
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="radio"
-                            name="addressMode"
-                            checked={addressMode === "custom"}
-                            onChange={() => setAddressMode("custom")}
-                            className="w-4 h-4 text-primary border-muted-foreground focus:ring-primary accent-primary"
-                        />
-                        <span className="text-sm">Insert any address</span>
-                    </label>
-                </div>
-
                 {/* Contract Address Input */}
                 <div className="space-y-2">
                     <Input
