@@ -129,7 +129,7 @@ export interface SessionDetail {
 }
 
 export interface InitSessionParams {
-    userId: string;
+    userId?: string;
     name?: string;
     network: 'movement-mainnet' | 'movement-testnet' | 'custom';
     customUrl?: string;
