@@ -25,7 +25,8 @@ WORKDIR /app/apps/sim-backend
 RUN bun run db:generate || true
 
 # Expose the port
-EXPOSE 3005
+EXPOSE 3005 
+# s
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
