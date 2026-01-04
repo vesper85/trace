@@ -25,6 +25,8 @@ COPY apps/sim-backend/. .
 # Generate Drizzle migrations if needed
 RUN bun run db:generate || true
 
+#sd
+
 # Expose the port
 EXPOSE 3005
 
