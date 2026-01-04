@@ -33,11 +33,6 @@ const externalLinks = [
         href: "https://docs.movementnetwork.xyz",
         icon: BookOpen,
     },
-    {
-        title: "Explorer",
-        href: "https://explorer.movementnetwork.xyz",
-        icon: ExternalLink,
-    },
 ];
 
 export function AppSidebar() {
@@ -51,6 +46,7 @@ export function AppSidebar() {
         return pathname === href || pathname.startsWith(`${href}/`);
     };
 
+
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
@@ -60,17 +56,14 @@ export function AppSidebar() {
                         <span className="font-bold">M</span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="font-semibold">Movement</span>
-                        <span className="text-xs text-muted-foreground">Developer Tools</span>
+                        <span className="font-semibold">Trace</span>
+                        <span className="text-xs text-muted-foreground">Debugging Tools</span>
                     </div>
                 </Link>
             </div>
 
             {/* Navigation */}
             <div className="flex-1 p-3 space-y-1">
-                <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Navigation
-                </p>
                 {navItems.map((item) => {
                     const active = isActive(item.href);
                     return (
@@ -98,9 +91,6 @@ export function AppSidebar() {
 
                 <Separator className="my-4" />
 
-                <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Resources
-                </p>
                 {externalLinks.map((item) => (
                     <a
                         key={item.href}

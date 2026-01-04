@@ -22,6 +22,7 @@ import {
     type SessionConfig,
     type OperationContents,
     type AccountInfo,
+    type Transaction,
 } from "../lib/api";
 
 interface SessionPageProps {
@@ -45,6 +46,7 @@ export default function SessionPage({ params }: SessionPageProps) {
 
     const [session, setSession] = useState<SessionConfig | null>(null);
     const [operations, setOperations] = useState<OperationContents[]>([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [defaultAccount, setDefaultAccount] = useState<AccountInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -63,6 +65,7 @@ export default function SessionPage({ params }: SessionPageProps) {
             const detail = await getSession(sessionId);
             setSession(detail.config);
             setDefaultAccount(detail.defaultAccount);
+            setTransactions(detail.transactions || []);
 
             // Set operations directly (now includes full contents)
             if (detail.operations && detail.operations.length > 0) {
@@ -101,7 +104,7 @@ export default function SessionPage({ params }: SessionPageProps) {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center">
+            <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="text-center">
                     <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
                     <p className="text-muted-foreground">Loading session...</p>
@@ -112,7 +115,7 @@ export default function SessionPage({ params }: SessionPageProps) {
 
     if (!session) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center">
+            <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="text-center">
                     <p className="text-muted-foreground mb-4">Session not found</p>
                     <Button onClick={() => router.push("/virtualnet")}>
@@ -124,7 +127,7 @@ export default function SessionPage({ params }: SessionPageProps) {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+        <div className="min-h-screen bg-background">
             {/* Header */}
             <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b">
                 <div className="container mx-auto px-6 py-4">
@@ -254,7 +257,11 @@ export default function SessionPage({ params }: SessionPageProps) {
                         ) : (
                             <div className="space-y-3">
                                 {operations.map((op) => (
-                                    <OperationCard key={op.name} operation={op} />
+                                    <OperationCard
+                                        key={op.name}
+                                        operation={op}
+                                        transactions={transactions}
+                                    />
                                 ))}
                             </div>
                         )}

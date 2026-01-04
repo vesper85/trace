@@ -13,14 +13,16 @@ import {
     FileText,
     Layers,
     Coins,
+    Code2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { OperationContents, OperationEvent, ResourceChange } from "../lib/api";
+import type { OperationContents, OperationEvent, ResourceChange, Transaction } from "../lib/api";
 
 interface OperationCardProps {
     operation: OperationContents;
+    transactions?: Transaction[];
 }
 
 function parseOperationName(name: string) {
@@ -81,17 +83,38 @@ function parseResourceKey(key: string): { address: string; resourceType: string 
     return { address: "", resourceType: key };
 }
 
-export function OperationCard({ operation }: OperationCardProps) {
+export function OperationCard({ operation, transactions = [] }: OperationCardProps) {
     const [showEvents, setShowEvents] = useState(false);
     const [showWriteSet, setShowWriteSet] = useState(false);
+    const [showInputs, setShowInputs] = useState(false);
 
     const parsed = parseOperationName(operation.name);
     const summary = operation.summary?.execute_transaction;
     const fundData = operation.summary?.fund_fungible;
 
+    // Find matching transaction by functionId (for execute operations)
+    const matchedTransaction = parsed.type === "execute" && parsed.functionId
+        ? transactions.find(tx => {
+            // Match by functionId - the operation name contains an abbreviated version
+            // e.g., "0x6a16...::pool::lend" vs "0x6a164188af7bb6a8268339343a5afe0242292713709af8801dafba3a054dc2f2::pool::lend"
+            const opFunc = parsed.functionId;
+            const txFunc = tx.functionId;
+            // Match by module::function suffix
+            const opSuffix = opFunc.split("::").slice(-2).join("::");
+            const txSuffix = txFunc.split("::").slice(-2).join("::");
+            return opSuffix === txSuffix;
+        })
+        : undefined;
+
     // Parse status - can be "Success" string or MoveAbort object
     let isSuccess = false;
     let statusText = "Unknown";
+    let errorDetails: {
+        code: number;
+        location?: string;
+        reasonName?: string;
+        description?: string;
+    } | null = null;
 
     // Handle execute transactions
     if (summary?.status && "Keep" in summary.status) {
@@ -100,10 +123,26 @@ export function OperationCard({ operation }: OperationCardProps) {
             isSuccess = true;
             statusText = "Success";
         } else if (typeof keepStatus === "object" && keepStatus !== null && "MoveAbort" in keepStatus) {
-            // Handle MoveAbort: { MoveAbort: { code, info: { reason_name, description } } }
-            const abort = (keepStatus as { MoveAbort: { code: number; info?: { reason_name?: string; description?: string } } }).MoveAbort;
+            // Handle MoveAbort: { MoveAbort: { location, code, info: { reason_name, description } } }
+            const abort = (keepStatus as {
+                MoveAbort: {
+                    location?: { Module?: { address: string; name: string } };
+                    code: number;
+                    info?: { reason_name?: string; description?: string }
+                }
+            }).MoveAbort;
             statusText = abort.info?.reason_name || `Abort(${abort.code})`;
             isSuccess = false;
+
+            // Store full error details
+            errorDetails = {
+                code: abort.code,
+                location: abort.location?.Module
+                    ? `${abort.location.Module.address}::${abort.location.Module.name}`
+                    : undefined,
+                reasonName: abort.info?.reason_name,
+                description: abort.info?.description,
+            };
         } else {
             statusText = String(keepStatus);
         }
@@ -119,6 +158,10 @@ export function OperationCard({ operation }: OperationCardProps) {
     const hasEvents = operation.events.length > 0;
     const writeSetKeys = Object.keys(operation.writeSet);
     const hasWriteSet = writeSetKeys.length > 0;
+    const hasInputs = matchedTransaction && (
+        (matchedTransaction.typeArguments && matchedTransaction.typeArguments.length > 0) ||
+        (matchedTransaction.args && matchedTransaction.args.length > 0)
+    );
 
     return (
         <Card
@@ -183,6 +226,34 @@ export function OperationCard({ operation }: OperationCardProps) {
                         <span className="text-xs text-muted-foreground">#{operation.index}</span>
                     </div>
                 </div>
+
+                {/* Error Details for failed transactions */}
+                {errorDetails && (
+                    <div className="mt-3 pt-3 border-t bg-red-500/5 -mx-4 px-4 py-2 border-b border-red-500/20">
+                        <div className="flex items-start gap-2">
+                            <XCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                            <div className="text-xs space-y-1 min-w-0">
+                                {errorDetails.description && (
+                                    <p className="text-red-400 font-medium">{errorDetails.description}</p>
+                                )}
+                                <div className="text-muted-foreground space-y-0.5">
+                                    <p>
+                                        <span className="text-muted-foreground/70">Error Code:</span>{" "}
+                                        <span className="font-mono">{errorDetails.code}</span>
+                                    </p>
+                                    {errorDetails.location && (
+                                        <p className="truncate">
+                                            <span className="text-muted-foreground/70">Location:</span>{" "}
+                                            <span className="font-mono" title={errorDetails.location}>
+                                                {shortenType(errorDetails.location)}
+                                            </span>
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Summary Stats */}
                 {summary && (
@@ -254,6 +325,21 @@ export function OperationCard({ operation }: OperationCardProps) {
                             <Layers className="w-3.5 h-3.5" />
                             Resources ({writeSetKeys.length})
                             {showWriteSet ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        </Button>
+                    )}
+                    {hasInputs && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1.5"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowInputs(!showInputs);
+                            }}
+                        >
+                            <Code2 className="w-3.5 h-3.5" />
+                            Inputs
+                            {showInputs ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         </Button>
                     )}
                 </div>
@@ -337,6 +423,39 @@ export function OperationCard({ operation }: OperationCardProps) {
                                 <p className="text-xs text-muted-foreground text-center py-2">
                                     +{writeSetKeys.length - 10} more resources...
                                 </p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Inputs Section */}
+                {showInputs && hasInputs && matchedTransaction && (
+                    <div className="mt-3 pt-3 border-t">
+                        <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5">
+                            <Code2 className="w-3.5 h-3.5" />
+                            Input Parameters
+                        </h4>
+                        <div className="space-y-2">
+                            {matchedTransaction.typeArguments && matchedTransaction.typeArguments.length > 0 && (
+                                <div className="text-xs bg-muted/50 p-2 rounded-lg">
+                                    <div className="text-muted-foreground mb-1 font-medium">Type Arguments:</div>
+                                    {matchedTransaction.typeArguments.map((typeArg, idx) => (
+                                        <div key={idx} className="font-mono text-primary truncate" title={typeArg}>
+                                            {shortenType(typeArg)}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {matchedTransaction.args && matchedTransaction.args.length > 0 && (
+                                <div className="text-xs bg-muted/50 p-2 rounded-lg">
+                                    <div className="text-muted-foreground mb-1 font-medium">Arguments:</div>
+                                    {matchedTransaction.args.map((arg, idx) => (
+                                        <div key={idx} className="font-mono text-foreground break-all">
+                                            <span className="text-muted-foreground">arg{idx}: </span>
+                                            {arg}
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>

@@ -108,7 +108,7 @@ export default function VirtualnetPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+        <div className="min-h-screen bg-background">
             {/* Header */}
             <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b">
                 <div className="container mx-auto px-6 py-4">

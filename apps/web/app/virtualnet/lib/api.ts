@@ -30,6 +30,12 @@ export interface FeeStatement {
  * MoveAbort error info
  */
 export interface MoveAbortInfo {
+    location?: {
+        Module?: {
+            address: string;
+            name: string;
+        };
+    };
     code: number;
     info?: {
         reason_name?: string;
@@ -98,10 +104,26 @@ export interface AccountInfo {
     balance: number;
 }
 
+/**
+ * Transaction from database with input parameters
+ */
+export interface Transaction {
+    id: string;
+    functionId: string;
+    sender: string;
+    success: boolean;
+    status: string;
+    gasUsed: number;
+    timestamp: string;
+    typeArguments?: string[];
+    args?: string[];
+}
+
 export interface SessionDetail {
     config: SessionConfig;
     delta: Record<string, unknown>;
     operations: OperationContents[];
+    transactions: Transaction[];
     defaultAccount: AccountInfo | null;
 }
 
