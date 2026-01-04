@@ -11,6 +11,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import Image from "next/image";
+import foxImage from "@/public/fox.png";
 
 const navItems = [
     {
@@ -30,7 +32,7 @@ const navItems = [
 const externalLinks = [
     {
         title: "Documentation",
-        href: "https://docs.movementnetwork.xyz",
+        href: "http://localhost:3002",
         icon: BookOpen,
     },
 ];
@@ -51,13 +53,14 @@ export function AppSidebar() {
         <div className="flex flex-col h-full">
             {/* Header */}
             <div className="p-4 border-b">
-                <Link href="/simulator" className="flex items-center gap-3 group">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-105">
-                        <span className="font-bold">M</span>
+                <Link href="/simulator" className="flex items-center gap-2 group">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-primary-foreground transition-transform group-hover:scale-105">
+                        <span className="font-bold">
+                            <Image src={foxImage} alt="fox" width={24} height={24} />
+                        </span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="font-semibold">Trace</span>
-                        <span className="text-xs text-muted-foreground">Debugging Tools</span>
+                        <span className="text-xl font-bold">Trace</span>
                     </div>
                 </Link>
             </div>
