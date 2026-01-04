@@ -6,6 +6,7 @@ const API_BASE = process.env.NEXT_PUBLIC_SIM_API_URL || 'http://localhost:3001';
 
 export interface SessionConfig {
     id: string;
+    userId?: string;
     name?: string;
     network: 'movement-mainnet' | 'movement-testnet' | 'custom';
     nodeUrl: string;
@@ -128,6 +129,7 @@ export interface SessionDetail {
 }
 
 export interface InitSessionParams {
+    userId: string;
     name?: string;
     network: 'movement-mainnet' | 'movement-testnet' | 'custom';
     customUrl?: string;
@@ -223,8 +225,9 @@ async function apiRequest<T>(
 
 // Session Management
 
-export async function listSessions(): Promise<{ sessions: SessionConfig[] }> {
-    return apiRequest('/sessions');
+export async function listSessions(userId?: string): Promise<{ sessions: SessionConfig[] }> {
+    const params = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+    return apiRequest(`/sessions${params}`);
 }
 
 export async function getSession(sessionId: string): Promise<SessionDetail> {

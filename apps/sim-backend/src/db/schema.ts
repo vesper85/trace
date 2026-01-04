@@ -7,6 +7,7 @@ import { pgTable, text, timestamp, boolean, integer, jsonb, uuid } from 'drizzle
 // Sessions table
 export const sessions = pgTable('sessions', {
     id: text('id').primaryKey(),
+    userId: text('user_id').notNull(),
     name: text('name').notNull(),
     network: text('network', { enum: ['movement-mainnet', 'movement-testnet', 'custom'] }).notNull(),
     nodeUrl: text('node_url').notNull(),

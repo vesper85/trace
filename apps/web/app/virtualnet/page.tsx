@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, RefreshCw, Server, Loader2 } from "lucide-react";
+import { Plus, RefreshCw, Server, Loader2, LogOut, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -21,6 +21,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SessionCard } from "./components/SessionCard";
+import { UserAuthModal } from "./components/UserAuthModal";
+import { useUser } from "./hooks/useUser";
 import {
     listSessions,
     initSession,
@@ -30,11 +32,14 @@ import {
 } from "./lib/api";
 
 export default function VirtualnetPage() {
+    const { user, isLoading: isUserLoading, isAuthenticated, createUser, login, logout } = useUser();
+
     const [sessions, setSessions] = useState<SessionConfig[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
 
     // Form state for new session
     const [sessionName, setSessionName] = useState("");
@@ -42,16 +47,22 @@ export default function VirtualnetPage() {
     const [apiKey, setApiKey] = useState("");
     const [networkVersion, setNetworkVersion] = useState("");
 
-    // Load sessions on mount
+    // Load sessions when user is authenticated
     useEffect(() => {
-        loadSessions();
-    }, []);
+        if (isAuthenticated && user) {
+            loadSessions();
+        } else if (!isUserLoading) {
+            setIsLoading(false);
+        }
+    }, [isAuthenticated, user, isUserLoading]);
 
     async function loadSessions() {
+        if (!user) return;
+
         setIsLoading(true);
         setError(null);
         try {
-            const response = await listSessions();
+            const response = await listSessions(user.id);
             setSessions(response.sessions);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to load sessions");
@@ -61,6 +72,8 @@ export default function VirtualnetPage() {
     }
 
     async function handleCreateSession() {
+        if (!user) return;
+
         if (!sessionName.trim()) {
             setError("Please enter a session name");
             return;
@@ -70,6 +83,7 @@ export default function VirtualnetPage() {
         setError(null);
         try {
             const params: InitSessionParams = {
+                userId: user.id,
                 name: sessionName.trim(),
                 network,
                 apiKey: apiKey || undefined,
@@ -107,6 +121,40 @@ export default function VirtualnetPage() {
         }
     }
 
+    async function copyUserId() {
+        if (user) {
+            await navigator.clipboard.writeText(user.id);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    }
+
+    // Show loading while checking user auth
+    if (isUserLoading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Show auth modal if not authenticated
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-background">
+                <UserAuthModal
+                    isOpen={true}
+                    onCreateUser={createUser}
+                    onLogin={login}
+                    newUserId={user?.id}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-background">
             {/* Header */}
@@ -127,6 +175,25 @@ export default function VirtualnetPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
+                            {/* User ID display */}
+                            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 text-sm">
+                                <span className="text-muted-foreground">ID:</span>
+                                <code className="font-mono text-xs">
+                                    {user?.id.slice(0, 8)}...
+                                </code>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={copyUserId}
+                                >
+                                    {copied ? (
+                                        <Check className="w-3 h-3 text-green-500" />
+                                    ) : (
+                                        <Copy className="w-3 h-3" />
+                                    )}
+                                </Button>
+                            </div>
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -134,6 +201,14 @@ export default function VirtualnetPage() {
                                 disabled={isLoading}
                             >
                                 <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={logout}
+                                title="Logout"
+                            >
+                                <LogOut className="w-4 h-4" />
                             </Button>
                             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                                 <DialogTrigger asChild>

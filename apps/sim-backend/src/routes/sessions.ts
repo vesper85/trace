@@ -23,6 +23,7 @@ import { NETWORK_URLS, type Network, type SessionConfig } from '../lib/types';
 
 // Extended request type with name field
 interface InitSessionRequest {
+    userId: string;
     name?: string;
     network: Network;
     customUrl?: string;
@@ -38,14 +39,16 @@ function generateSessionId(): string {
 }
 
 export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
-    // List all sessions - from database
-    .get('/', async () => {
-        const dbSessions = await listAllSessions();
+    // List all sessions - from database (filtered by userId if provided)
+    .get('/', async ({ query }) => {
+        const userId = query.userId as string | undefined;
+        const dbSessions = await listAllSessions(userId);
 
         // Map database records to SessionConfig format
         // Convert null to undefined and Date to string for type compatibility
         const sessions: SessionConfig[] = dbSessions.map(s => ({
             id: s.id,
+            userId: s.userId,
             name: s.name,
             network: s.network,
             nodeUrl: s.nodeUrl,
@@ -125,7 +128,13 @@ export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
 
     // Initialize a new session
     .post('/init', async ({ body, set }) => {
-        const { name, network, customUrl, networkVersion, apiKey } = body as InitSessionRequest;
+        const { userId, name, network, customUrl, networkVersion, apiKey } = body as InitSessionRequest;
+
+        // Validate userId is provided
+        if (!userId) {
+            set.status = 400;
+            return { error: 'userId is required' };
+        }
 
         // Determine the node URL
         let nodeUrl: string;
@@ -156,6 +165,7 @@ export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
         // Save session to database
         const dbSession = await createSessionInDb({
             id: sessionId,
+            userId,
             name: sessionName,
             network,
             nodeUrl: nodeUrl,
@@ -189,6 +199,7 @@ export const sessionsRoutes = new Elysia({ prefix: '/sessions' })
         };
     }, {
         body: t.Object({
+            userId: t.String(),
             name: t.Optional(t.String()),
             network: t.Union([
                 t.Literal('movement-mainnet'),

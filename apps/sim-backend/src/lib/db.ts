@@ -20,6 +20,7 @@ export async function createSession(session: Omit<NewSession, 'createdAt' | 'upd
     try {
         const [result] = await db.insert(sessions).values({
             id: session.id,
+            userId: session.userId,
             name: session.name,
             network: session.network,
             nodeUrl: session.nodeUrl,
@@ -51,12 +52,18 @@ export async function getSessionById(sessionId: string): Promise<Session | null>
 }
 
 /**
- * List all sessions
+ * List all sessions (optionally filtered by userId)
  */
-export async function listAllSessions(): Promise<Session[]> {
+export async function listAllSessions(userId?: string): Promise<Session[]> {
     const db = getDb();
 
     try {
+        if (userId) {
+            const result = await db.select().from(sessions)
+                .where(eq(sessions.userId, userId))
+                .orderBy(desc(sessions.createdAt));
+            return result;
+        }
         const result = await db.select().from(sessions).orderBy(desc(sessions.createdAt));
         return result;
     } catch (error) {
