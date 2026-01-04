@@ -1,0 +1,48 @@
+# Getting Started
+
+This guide will help you get up and running with Trace in just a few minutes.
+
+## Prerequisites
+
+Before using Trace, make sure you have:
+
+- A modern web browser (Chrome, Firefox, Safari, or Edge)
+- A Movement-compatible wallet (optional, for using your own address in simulations)
+
+## Accessing Trace
+
+Trace is a web-based application. Simply navigate to the Trace URL to get started.
+
+## Quick Start: Simulate Your First Transaction
+
+### Step 1: Enter a Contract Address
+
+1. Open the **Simulator** from the sidebar
+2. Enter a contract address in the input field (e.g., `0x1` for the core framework)
+3. Trace will automatically fetch all available modules
+
+### Step 2: Select a Function
+
+1. If the contract has multiple modules, select the one you want to explore
+2. Choose a function from the dropdown
+3. Functions are labeled as `entry` (state-changing) or `view` (read-only)
+
+### Step 3: Fill in Parameters
+
+1. Enter any required **type arguments** (generic types like `0x1::aptos_coin::AptosCoin`)
+2. Fill in **function arguments** based on the parameter types shown
+3. For entry functions, specify the sender address and gas parameters
+
+### Step 4: Run the Simulation
+
+1. Click **Simulate** to execute
+2. View the results including:
+   - Success/failure status
+   - Gas usage breakdown
+   - Emitted events
+   - State changes
+
+## Next Steps
+
+- Learn more about the [Simulator](/simulator) features
+- Explore [VirtualNet](/virtualnet) for testing transaction sequences

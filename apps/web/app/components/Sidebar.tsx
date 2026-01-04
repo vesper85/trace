@@ -4,110 +4,120 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
     Play,
-    FileCode,
-    Settings,
+    Network,
     BookOpen,
     ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import Image from "next/image";
+import foxImage from "@/public/fox.png";
 
 const navItems = [
     {
         title: "Simulator",
         href: "/simulator",
         icon: Play,
+        description: "Simulate transactions",
     },
     {
-        title: "Contracts",
-        href: "/contracts",
-        icon: FileCode,
-    },
-    {
-        title: "Settings",
-        href: "/settings",
-        icon: Settings,
+        title: "VirtualNet",
+        href: "/virtualnet",
+        icon: Network,
+        description: "Fork & test on virtual network",
     },
 ];
 
 const externalLinks = [
     {
         title: "Documentation",
-        href: "https://docs.movementnetwork.xyz",
+        href: "http://localhost:3002",
         icon: BookOpen,
-    },
-    {
-        title: "Explorer",
-        href: "https://explorer.movementnetwork.xyz",
-        icon: ExternalLink,
     },
 ];
 
 export function AppSidebar() {
     const pathname = usePathname();
 
+    // Check if the current path matches or is a child of the nav item
+    const isActive = (href: string) => {
+        if (href === "/") {
+            return pathname === "/";
+        }
+        return pathname === href || pathname.startsWith(`${href}/`);
+    };
+
+
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
             <div className="p-4 border-b">
-                <Link href="/simulator" className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                        <span className="font-bold">M</span>
+                <Link href="/simulator" className="flex items-center gap-2 group">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-primary-foreground transition-transform group-hover:scale-105">
+                        <span className="font-bold">
+                            <Image src={foxImage} alt="fox" width={24} height={24} />
+                        </span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="font-semibold">Movement</span>
-                        <span className="text-xs text-muted-foreground">Developer Tools</span>
+                        <span className="text-xl font-bold">Trace</span>
                     </div>
                 </Link>
             </div>
 
             {/* Navigation */}
             <div className="flex-1 p-3 space-y-1">
-                <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Navigation
-                </p>
                 {navItems.map((item) => {
-                    const isActive = pathname === item.href;
+                    const active = isActive(item.href);
                     return (
-                        <Link key={item.href} href={item.href}>
-                            <Button
-                                variant={isActive ? "secondary" : "ghost"}
-                                className={cn(
-                                    "w-full justify-start gap-3",
-                                    isActive && "bg-secondary"
-                                )}
-                            >
-                                <item.icon className="h-4 w-4" />
-                                {item.title}
-                            </Button>
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={cn(
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                                "hover:bg-accent hover:text-accent-foreground",
+                                active && [
+                                    "bg-primary/10 text-primary",
+                                    "dark:bg-primary/20 dark:text-primary",
+                                    "border-l-2 border-primary -ml-0.5 pl-[calc(0.75rem+2px)]",
+                                ]
+                            )}
+                        >
+                            <item.icon className={cn(
+                                "h-4 w-4 shrink-0",
+                                active && "text-primary"
+                            )} />
+                            <span>{item.title}</span>
                         </Link>
                     );
                 })}
 
                 <Separator className="my-4" />
 
-                <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Resources
-                </p>
                 {externalLinks.map((item) => (
                     <a
                         key={item.href}
                         href={item.href}
                         target="_blank"
                         rel="noopener noreferrer"
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                            "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        )}
                     >
-                        <Button variant="ghost" className="w-full justify-start gap-3">
-                            <item.icon className="h-4 w-4" />
-                            {item.title}
-                            <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
-                        </Button>
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span className="flex-1">{item.title}</span>
+                        <ExternalLink className="h-3 w-3 opacity-50" />
                     </a>
                 ))}
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t">
+            <div className="p-4 border-t space-y-3">
+                <div className="flex flex-col items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Theme</span>
+                    <ThemeToggle />
+                </div>
                 <p className="text-xs text-muted-foreground text-center">
                     Movement L1 DevTools
                 </p>

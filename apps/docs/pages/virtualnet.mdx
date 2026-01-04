@@ -1,0 +1,120 @@
+# VirtualNet
+
+VirtualNet allows you to create forked network sessions for testing complex transaction sequences in isolation.
+
+## Overview
+
+VirtualNet creates a virtual copy (fork) of the Movement network, allowing you to:
+
+- Execute multiple transactions without affecting the real network
+- Fund test accounts with simulated tokens
+- Review transaction history within a session
+- Test complex DeFi flows or multi-step operations
+
+## Sessions
+
+### Creating a Session
+
+1. Navigate to **VirtualNet** from the sidebar
+2. Click **Create Session**
+3. Enter a descriptive session name
+4. Select the network to fork (mainnet or testnet)
+5. Click **Create**
+
+Your session is created with a unique ID and is ready for transactions.
+
+### Managing Sessions
+
+From the VirtualNet landing page, you can:
+
+- View all your sessions
+- See session creation time and network
+- Open a session to view details
+- Delete sessions you no longer need
+
+## Executing Transactions
+
+Within a session, you can execute transactions that modify the virtual state.
+
+### Send Transaction
+
+1. Open a session
+2. Click **Send Transaction**
+3. Enter the transaction details:
+   - Contract address
+   - Function to call
+   - Arguments
+4. Submit to execute on the virtual network
+
+### Fund Account
+
+Need tokens for testing? Fund any account:
+
+1. Click **Fund Account**
+2. Enter the account address
+3. Specify the amount (in APT)
+4. The account will receive simulated tokens
+
+## Transaction History
+
+Each session maintains a complete history of operations:
+
+| Field | Description |
+|-------|-------------|
+| **Index** | Order of execution |
+| **Operation** | Function called or fund operation |
+| **Status** | Success or failure with details |
+| **Gas Used** | Gas consumed by the transaction |
+| **Events** | Events emitted during execution |
+| **State Changes** | Resources modified |
+
+### Viewing Operation Details
+
+Click on any operation card to expand:
+
+- **Events** — All events with their data
+- **Resources** — State changes with before/after values
+- **Inputs** — Parameters passed to the function
+
+### Failed Transactions
+
+Failed operations show detailed error information:
+
+- Error code
+- Error description
+- Module location where the abort occurred
+
+## Use Cases
+
+### Testing DeFi Interactions
+
+```
+1. Fund account with APT
+2. Swap APT for USDC
+3. Supply USDC to lending protocol
+4. Borrow against collateral
+```
+
+Test the entire flow without risking real assets.
+
+### Debugging Transaction Sequences
+
+When a series of transactions fails:
+
+1. Create a session forked at the right block
+2. Replay transactions one by one
+3. Identify which step fails and why
+
+### Contract Development
+
+Before deploying to testnet:
+
+1. Deploy contract to VirtualNet
+2. Test all entry points
+3. Verify edge cases and error handling
+
+import { Callout } from 'nextra/components'
+
+<Callout type="info">
+  VirtualNet sessions are ephemeral. They persist during your browser session but may be cleared on server restart.
+</Callout>
