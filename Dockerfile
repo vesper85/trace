@@ -13,16 +13,14 @@ COPY package.json pnpm-workspace.yaml ./
 COPY packages/typescript-config ./packages/typescript-config/
 
 # Copy sim-backend package files
-COPY apps/sim-backend/package.json ./apps/sim-backend/
-COPY apps/sim-backend/bun.lock* ./apps/sim-backend/
+COPY apps/sim-backend/package.json apps/sim-backend/bun.lock* ./apps/sim-backend/
 
-# Install dependencies from root
-RUN bun install --frozen-lockfile || bun install
+# Change to sim-backend directory and install its dependencies
+WORKDIR /app/apps/sim-backend
+RUN bun install
 
 # Copy sim-backend source code
-COPY apps/sim-backend/. ./apps/sim-backend/
-
-WORKDIR /app/apps/sim-backend
+COPY apps/sim-backend/. .
 
 # Generate Drizzle migrations if needed
 RUN bun run db:generate || true
