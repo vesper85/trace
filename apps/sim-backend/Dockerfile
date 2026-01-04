@@ -18,7 +18,7 @@ RUN bun run db:generate || true
 # Expose the port
 EXPOSE 3005
 
-# Health check
+# Health che
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3005/health || exit 1
 
