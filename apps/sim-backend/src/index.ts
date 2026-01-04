@@ -15,7 +15,7 @@ import { simulateRoutes } from './routes/simulate';
 import { viewRoutes } from './routes/view';
 import { SESSIONS_DIR, APTOS_CLI, ensureSessionsDir } from './lib/cli';
 
-const PORT = parseInt(process.env.PORT || '3001');
+const PORT = parseInt(process.env.PORT || '3005');
 
 // Ensure sessions directory exists on startup
 await ensureSessionsDir();
@@ -23,7 +23,7 @@ await ensureSessionsDir();
 const app = new Elysia({ adapter: node() })
     // Enable CORS for frontend access
     .use(cors({
-        origin: /localhost:\d+$/,
+        origin: true, // Allow all origins in production
         methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     }))
 

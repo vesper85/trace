@@ -1,6 +1,9 @@
 # Use official Bun image
 FROM oven/bun:1
 
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy workspace configuration files
@@ -25,11 +28,10 @@ WORKDIR /app/apps/sim-backend
 RUN bun run db:generate || true
 
 # Expose the port
-EXPOSE 3005 
-# s
+EXPOSE 3005
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:3005/health || exit 1
 
 # Start the application

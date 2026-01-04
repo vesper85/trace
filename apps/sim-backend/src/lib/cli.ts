@@ -14,7 +14,7 @@ const SESSIONS_DIR = process.env.APTOS_SIM_SESSIONS_DIR || '/tmp/aptos-sim-sessi
 
 // Aptos CLI path - defaults to patched version that works with Movement network
 // Can be overridden with APTOS_CLI_PATH env var
-const APTOS_CLI = process.env.APTOS_CLI_PATH || '/Users/parikshitdeshmukh/projects/aptos/aptos-core/target/release/aptos';
+const APTOS_CLI = process.env.APTOS_CLI_PATH || 'aptos';
 
 /**
  * Ensures the sessions directory exists
