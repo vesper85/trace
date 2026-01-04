@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy workspace configuration files
+# Copy workspace configuration files (package.json now includes workspaces field)
 COPY package.json pnpm-workspace.yaml ./
 
 # Copy the typescript-config package (workspace dependency)
@@ -15,9 +15,13 @@ COPY packages/typescript-config ./packages/typescript-config/
 # Copy sim-backend package files
 COPY apps/sim-backend/package.json apps/sim-backend/bun.lock* ./apps/sim-backend/
 
-# Change to sim-backend directory and install its dependencies
+# Install dependencies for sim-backend from root context
+# Bun needs to see the workspace structure to resolve @repo/typescript-config
+# Using --cwd ensures we install only for sim-backend, but workspace is still recognized
+RUN bun install --cwd apps/sim-backend
+
+# Change to sim-backend directory
 WORKDIR /app/apps/sim-backend
-RUN bun install
 
 # Copy sim-backend source code
 COPY apps/sim-backend/. .
