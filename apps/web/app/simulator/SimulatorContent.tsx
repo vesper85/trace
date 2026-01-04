@@ -18,22 +18,22 @@ import { simulateTransaction, SimulationInput } from "@/lib/movement";
 export default function SimulatorContent() {
     const { account } = useWallet();
 
-    // Network state
+    // network state
     const [selectedNetwork, setSelectedNetwork] = useState<NetworkType>("mainnet");
 
-    // Contract state (from ContractBlock)
+    // contract state (from ContractBlock)
     const [contractAddress, setContractAddress] = useState<string>("");
     const [selectedModule, setSelectedModule] = useState<ModuleInfo | null>(null);
     const [selectedFunction, setSelectedFunction] = useState<MoveExposedFunction | null>(null);
     const [functionInputs, setFunctionInputs] = useState<FunctionInputValue[]>([]);
     const [typeArguments, setTypeArguments] = useState<string[]>([]);
 
-    // Simulation state
+    // simulation state
     const [isSimulating, setIsSimulating] = useState(false);
     const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
     const [simulationError, setSimulationError] = useState<string | null>(null);
 
-    // Handle contract changes
+    // handle contract changes
     const handleContractChange = useCallback((address: string) => {
         setContractAddress(address);
         setSelectedModule(null);
@@ -61,7 +61,7 @@ export default function SimulatorContent() {
         setTypeArguments(typeArgs);
     }, []);
 
-    // Handle simulation
+    // handle simulation
     const handleSimulate = async (params: {
         senderAddress: string;
         gasLimit: string;
@@ -77,7 +77,7 @@ export default function SimulatorContent() {
         setSimulationResult(null);
 
         try {
-            // Check if this is a view function
+            // check if this is a view function
             if (selectedFunction.is_view) {
                 // Import dynamically to avoid circular deps
                 const { callViewFunction } = await import("@/lib/movement");
@@ -107,7 +107,16 @@ export default function SimulatorContent() {
                     rawResponse: result.rawResponse,
                 });
             } else {
-                // Entry function - use transaction simulation
+                // entry function - use transaction simulation
+                // get the wallet's public key if available (for proper simulation with real address)
+                let senderPublicKeyHex: string | undefined;
+                if (account?.publicKey) {
+                    // the publicKey from wallet adapter is a PublicKey object
+                    // convert to hex string for the simulation
+                    senderPublicKeyHex = account.publicKey.toString();
+                    console.log("Using wallet public key:", senderPublicKeyHex);
+                }
+
                 const input: SimulationInput = {
                     contractAddress: contractAddress,
                     moduleName: selectedModule.name,
@@ -117,6 +126,7 @@ export default function SimulatorContent() {
                     senderAddress: params.senderAddress,
                     gasLimit: params.gasLimit,
                     gasPrice: params.gasPrice,
+                    senderPublicKeyHex: senderPublicKeyHex,
                 };
 
                 console.log("Simulating with input:", input);
@@ -150,7 +160,7 @@ export default function SimulatorContent() {
         }
     };
 
-    // Check if we can simulate
+    // check if we can simulate
     const canSimulate = Boolean(
         contractAddress &&
         selectedModule &&

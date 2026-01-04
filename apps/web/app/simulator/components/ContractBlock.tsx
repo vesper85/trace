@@ -15,7 +15,7 @@ import {
 import { NetworkType, NETWORKS } from "../types";
 import { movement } from "@/lib/movement";
 
-// Types for Movement module ABI (matching the API response)
+// types for movement module abi (matching the api response)
 interface MoveFunctionParam {
     constraints: string[];
 }
@@ -43,7 +43,7 @@ interface MoveModule {
     abi: MoveModuleABI;
 }
 
-// Simplified types for UI
+// simplified types for ui
 interface ModuleInfo {
     name: string;
     address: string;
@@ -83,16 +83,16 @@ export function ContractBlock({
     onTypeArgumentsChange,
     onNetworkChange,
 }: ContractBlockProps) {
-    // Address input mode
+    // address input mode
     const [addressMode, setAddressMode] = useState<AddressMode>("custom");
 
-    // Contract address
+    // contract address
     const [contractAddress, setContractAddress] = useState("");
     const [addressValidationError, setAddressValidationError] = useState<string | null>(null);
 
-    // Validate contract address format (0x + 64 hex characters = 32 bytes)
+    // validate contract address format (0x + 64 hex characters = 32 bytes)
     const validateAddress = (address: string): string | null => {
-        if (!address) return null; // Empty is okay, not an error yet
+        if (!address) return null; // empty is okay, not an error yet
 
         if (!address.startsWith("0x")) {
             return "Address must start with '0x'";
@@ -108,56 +108,56 @@ export function ContractBlock({
             return `Address must be 32 bytes (64 hex characters). Currently: ${hexPart.length}/64`;
         }
 
-        return null; // Valid
+        return null; // valid
     };
 
-    // Check if address is valid for fetching
+    // check if address is valid for fetching
     const isValidAddress = (address: string): boolean => {
         if (!address.startsWith("0x")) return false;
         const hexPart = address.slice(2);
         return hexPart.length === 64 && /^[a-fA-F0-9]+$/.test(hexPart);
     };
 
-    // Network selection
+    // network selection
     const [network, setNetwork] = useState<NetworkType>("mainnet");
 
-    // Contract info (fetched from network)
+    // contract info (fetched from network)
     const [contractInfo, setContractInfo] = useState<ContractInfo | null>(null);
     const [isLoadingContract, setIsLoadingContract] = useState(false);
     const [contractError, setContractError] = useState<string | null>(null);
 
-    // Selected module
+    // selected module
     const [selectedModule, setSelectedModule] = useState<string>("");
 
-    // Input mode for function parameters
+    // input mode for function parameters
     const [inputMode, setInputMode] = useState<InputMode>("structured");
 
-    // Selected function
+    // selected function
     const [selectedFunction, setSelectedFunction] = useState<string>("");
 
-    // Function input values
+    // function input values
     const [inputValues, setInputValues] = useState<FunctionInputValue[]>([]);
 
-    // Type argument values
+    // type argument values
     const [typeArgValues, setTypeArgValues] = useState<string[]>([]);
 
-    // Raw input data (for raw mode)
+    // raw input data (for raw mode)
     const [rawInputData, setRawInputData] = useState("");
 
-    // Get selected module object
+    // get selected module object
     const selectedModuleObj = contractInfo?.modules.find(
         (m) => m.name === selectedModule
     );
 
-    // Get selected function object
+    // get selected function object
     const selectedFunctionObj = selectedModuleObj?.functions.find(
         (f) => f.name === selectedFunction
     );
 
-    // Fetch contract modules when address and network change
+    // fetch contract modules when address and network change
     useEffect(() => {
         const fetchContractModules = async () => {
-            // Only fetch if address is valid format
+            // only fetch if address is valid format
             if (!isValidAddress(contractAddress)) {
                 setContractInfo(null);
                 setContractError(null);
