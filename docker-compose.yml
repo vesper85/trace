@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  # Simulation Backend
+  sim-backend:
+    build:
+      context: ./apps/sim-backend
+      dockerfile: Dockerfile
+    container_name: sim-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: production
+      PORT: 3005
+    ports:
+      - "3005:3005"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
