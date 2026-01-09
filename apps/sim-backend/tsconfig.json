@@ -1,5 +1,5 @@
 {
-    "extends": "@repo/typescript-config/base.json",
+    "$schema": "https://json.schemastore.org/tsconfig",
     "compilerOptions": {
         "target": "ESNext",
         "module": "ESNext",
@@ -7,6 +7,18 @@
         "strict": true,
         "skipLibCheck": true,
         "esModuleInterop": true,
+        "declaration": true,
+        "declarationMap": true,
+        "incremental": false,
+        "isolatedModules": true,
+        "lib": [
+            "ES2022",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "moduleDetection": "force",
+        "noUncheckedIndexedAccess": true,
+        "resolveJsonModule": true,
         "types": [
             "bun-types",
             "node"
