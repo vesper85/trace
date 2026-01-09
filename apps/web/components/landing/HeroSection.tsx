@@ -61,14 +61,14 @@ export default function HeroSection() {
               <a href="/simulator">
                 <GradientButton
                   text="Go to Trace"
-                  className="rounded-full md:h-10 md:px-6"
+                  className="rounded-lg md:h-10 md:px-6"
                   variant="white"
                 />
               </a>
               <a href="https://trace-docs-eight.vercel.app/" target="_blank" rel="noopener noreferrer">
                 <GradientButton
                   text="View Docs"
-                  className="rounded-full md:h-10 md:px-6"
+                  className="rounded-lg md:h-10 md:px-6"
                   variant="orange"
                 />
               </a>
@@ -81,7 +81,7 @@ export default function HeroSection() {
           alt="hero"
           height={720}
           width={1400}
-          className="mx-auto rounded-2xl object-cover h-full object-left-top"
+          className="mx-auto rounded-lg object-cover h-full object-left-top"
           draggable={false}
         />
       </ContainerScroll>

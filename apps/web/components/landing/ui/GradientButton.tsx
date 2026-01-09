@@ -62,13 +62,13 @@ const sizeStyles = {
   lg: 'px-6 py-2.5 text-base'
 };
 
-export function GradientButton({ 
-  text, 
-  variant = 'orange', 
-  size = 'md', 
+export function GradientButton({
+  text,
+  variant = 'orange',
+  size = 'md',
   className,
   onClick,
-  disabled = false 
+  disabled = false
 }: GradientButtonProps) {
   const variantStyle = variantStyles[variant];
   const sizeStyle = sizeStyles[size];
@@ -78,7 +78,7 @@ export function GradientButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "relative inline-block rounded-full font-medium transition-all duration-200",
+        "relative inline-block rounded-lg font-medium transition-all duration-200",
         "active:scale-[0.98] flex justify-center items-center",
         "hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
         variantStyle.textColor,
@@ -92,17 +92,17 @@ export function GradientButton({
     >
       <span className="relative z-10">{text}</span>
       <span
-        className="absolute left-1/2 top-0 z-20 w-[80%] h-2/5 -translate-x-1/2 rounded-t-full pointer-events-none"
+        className="absolute left-1/2 top-0 z-20 w-[80%] h-2/5 -translate-x-1/2 rounded-t-lg pointer-events-none"
         style={{
           background:
-            variant === 'white' 
+            variant === 'white'
               ? "linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 80%, transparent 100%)"
               : "linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 80%, transparent 100%)",
           filter: "blur(1.5px)",
         }}
       />
       <span
-        className="absolute inset-0 z-0 rounded-full pointer-events-none"
+        className="absolute inset-0 z-0 rounded-lg pointer-events-none"
         style={{
           boxShadow: variantStyle.innerShadow
         }}

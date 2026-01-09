@@ -283,14 +283,14 @@ export function OperationCard({ operation, transactions = [] }: OperationCardPro
                         <div className="flex items-center gap-1.5" title="Amount Funded">
                             <Coins className="w-3.5 h-3.5 text-yellow-500" />
                             <span className="font-medium text-foreground">
-                                +{(fundData.amount / 100_000_000).toFixed(2)} APT
+                                +{(fundData.amount / 100_000_000).toFixed(2)} MOVE
                             </span>
                         </div>
                         <div className="flex items-center gap-1.5" title="Balance Before">
-                            <span>Before: {(fundData.before / 100_000_000).toFixed(2)} APT</span>
+                            <span>Before: {(fundData.before / 100_000_000).toFixed(2)} MOVE</span>
                         </div>
                         <div className="flex items-center gap-1.5" title="Balance After">
-                            <span>After: {(fundData.after / 100_000_000).toFixed(2)} APT</span>
+                            <span>After: {(fundData.after / 100_000_000).toFixed(2)} MOVE</span>
                         </div>
                     </div>
                 )}

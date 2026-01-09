@@ -103,7 +103,7 @@ const faqCategories: FAQCategory[] = [
         id: "fund-account",
         question: "How do I fund test accounts?",
         answer:
-          "Within a session, click Fund Account, enter the account address and specify the amount in APT. The account will receive simulated tokens that can be used for testing transactions.",
+          "Within a session, click Fund Account, enter the account address and specify the amount in MOVE. The account will receive simulated tokens that can be used for testing transactions.",
       },
       {
         id: "tx-history",
@@ -145,7 +145,7 @@ const faqCategories: FAQCategory[] = [
         id: "defi-testing",
         question: "How can I test DeFi interactions?",
         answer:
-          "Fund an account with APT, swap APT for USDC, supply USDC to a lending protocol, borrow against collateral - test the entire flow without risking real assets using VirtualNet sessions.",
+          "Fund an account with MOVE, swap MOVE for USDC, supply USDC to a lending protocol, borrow against collateral - test the entire flow without risking real assets using VirtualNet sessions.",
       },
       {
         id: "pre-deploy",

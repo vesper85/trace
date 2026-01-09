@@ -11,8 +11,6 @@ import {
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import Image from "next/image";
-import foxImage from "@/public/fox.png";
 
 const navItems = [
     {
@@ -54,14 +52,11 @@ export function AppSidebar() {
             {/* Header */}
             <div className="p-4 border-b">
                 <Link href="/simulator" className="flex items-center gap-2 group">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-primary-foreground transition-transform group-hover:scale-105">
-                        <span className="font-bold">
-                            <Image src={foxImage} alt="fox" width={24} height={24} />
-                        </span>
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-xl font-bold">Trace</span>
-                    </div>
+                    <img
+                        src="/logo.png"
+                        alt="Trace Logo"
+                        className="w-20 h-auto object-contain dark:invert-0 invert transition-transform group-hover:scale-105"
+                    />
                 </Link>
             </div>
 

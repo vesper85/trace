@@ -241,9 +241,9 @@ export function TransactionParameters({
 
                 {/* State Overrides Section */}
                 <div className="pt-4 border-t">
-                    <button
+                    <div
                         onClick={() => setStateOverridesExpanded(!stateOverridesExpanded)}
-                        className="flex items-center justify-between w-full"
+                        className="flex items-center justify-between w-full cursor-pointer"
                     >
                         <h3 className="text-base font-semibold">State Overrides</h3>
                         <div className="flex items-center gap-2">
@@ -264,7 +264,7 @@ export function TransactionParameters({
                                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
                             )}
                         </div>
-                    </button>
+                    </div>
 
                     {stateOverridesExpanded && (
                         <div className="mt-4 space-y-4">

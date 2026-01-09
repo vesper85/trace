@@ -76,8 +76,8 @@ export function VideoSection() {
                 key={tab.id}
                 onClick={() => handleTabClick(tab)}
                 className={`w-full text-left p-4 rounded-lg transition-all hover:border-orange-300 duration-300 ${activeTab === tab.id
-                    ? "bg-secondary border-l-4 border-orange-500"
-                    : "bg-secondary/50 hover:bg-secondary-800"
+                  ? "bg-secondary border-l-4 border-orange-500"
+                  : "bg-secondary/50 hover:bg-secondary-800"
                   } ${tab.isHighlighted
                     ? "border border-orange-500/50"
                     : "border"
@@ -130,8 +130,8 @@ export function VideoSection() {
                 </h3>
               </div>
 
-              <div className="relative rounded-3xl overflow-hidden ring-2 ring-secondary">
-                <div className="relative z-10 p-4 border-[8px] rounded-3xl overflow-hidden">
+              <div className="relative rounded-lg overflow-hidden ring-2 ring-secondary">
+                <div className="relative z-10 p-4 border-[8px] rounded-lg overflow-hidden">
                   <video
                     src={currentTab.videoUrl}
                     title={currentTab.title}

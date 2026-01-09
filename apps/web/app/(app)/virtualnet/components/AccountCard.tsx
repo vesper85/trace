@@ -106,7 +106,7 @@ export function AccountCard({ address, balance, session, onFundSuccess, onError 
                     <span className="text-sm text-muted-foreground">Balance</span>
                     <div className="flex items-center gap-1.5">
                         <Coins className="w-4 h-4 text-yellow-500" />
-                        <span className="font-semibold">{formatBalance(balance)} APT</span>
+                        <span className="font-semibold">{formatBalance(balance)} MOVE</span>
                     </div>
                 </div>
 
@@ -114,7 +114,7 @@ export function AccountCard({ address, balance, session, onFundSuccess, onError 
                 {showFundForm ? (
                     <div className="space-y-2 pt-2 border-t">
                         <Label htmlFor="fundAmount" className="text-xs">
-                            Amount (APT)
+                            Amount (MOVE)
                         </Label>
                         <div className="flex gap-2">
                             <Input

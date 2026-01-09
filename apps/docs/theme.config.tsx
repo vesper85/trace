@@ -3,9 +3,13 @@ import { DocsThemeConfig } from "nextra-theme-docs";
 
 const config: DocsThemeConfig = {
     logo: (
-        <span style={{ fontWeight: 700, fontSize: "1.25rem" }}>
-            🦊 Trace
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <img
+                src="/logo.png"
+                alt="Trace Logo"
+                style={{ height: "32px", width: "auto" }}
+            />
+        </div>
     ),
     project: {
         link: "https://github.com/your-org/trace",
@@ -26,7 +30,7 @@ const config: DocsThemeConfig = {
             titleTemplate: "%s – Trace Docs",
         };
     },
-    primaryHue: 270,
+    primaryHue: 30,
     sidebar: {
         defaultMenuCollapseLevel: 1,
         toggleButton: true,

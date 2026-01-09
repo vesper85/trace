@@ -9,6 +9,17 @@ import {
   IconFile,
 } from "@tabler/icons-react";
 import {
+  Gamepad2,
+  Package,
+  Globe,
+  FolderOpen,
+  Wallet,
+  ArrowLeftRight,
+  Bug,
+  Rocket,
+} from "lucide-react";
+
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -16,6 +27,13 @@ import {
   DialogTitle,
 } from "@/components/landing/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Styled icon wrapper component for consistent styling
+const IconWrapper = ({ children, gradient = "from-orange-500 to-amber-400" }: { children: React.ReactNode; gradient?: string }) => (
+  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg shadow-orange-500/20`}>
+    {children}
+  </div>
+);
 
 interface CourseCardProps {
   title: string;
@@ -126,11 +144,10 @@ function SyllabusTree({
           className="mb-2"
         >
           <motion.div
-            className={`flex items-center gap-2 p-1.5 rounded hover:bg-secondary cursor-pointer transition-colors ${
-              item.id === "language-basics"
-                ? "bg-orange-600/20 text-orange-400"
-                : ""
-            }`}
+            className={`flex items-center gap-2 p-1.5 rounded hover:bg-secondary cursor-pointer transition-colors ${item.id === "language-basics"
+              ? "bg-orange-600/20 text-orange-400"
+              : ""
+              }`}
             onClick={() => item.type === "folder" && toggleExpanded(item.id)}
             whileHover={{ x: 2 }}
             whileTap={{ scale: 0.98 }}
@@ -220,12 +237,7 @@ function CourseCard({
 
         <div className="mt-auto">
           <p className="text-sm text-muted-foreground mb-4">{description}</p>
-          <button
-            onClick={() => setIsDialogOpen(true)}
-            className="w-full bg-neutral-800 hover:bg-gradient-to-r from-orange-500 to-orange-400 text-white py-2 px-4 rounded-lg transition-all duration-300 group-hover:bg-gradient-to-r from-orange-500 to-orange-400 group-hover:shadow-md"
-          >
-            View Syllabus
-          </button>
+
         </div>
       </div>
 
@@ -333,7 +345,7 @@ export function TabsSection() {
             topics="Entry & View Functions"
             contests=""
             problems="Unlimited Simulations"
-            icon={<div className="text-white">🎮</div>}
+            icon={<IconWrapper gradient="from-orange-500 to-amber-400"><Gamepad2 className="w-8 h-8 text-white" /></IconWrapper>}
             syllabusData={simulatorSyllabus}
           />
           <CourseCard
@@ -342,16 +354,7 @@ export function TabsSection() {
             topics="Auto Module Discovery"
             contests=""
             problems="ABI Parsing"
-            icon={<div className="text-white">📦</div>}
-            syllabusData={simulatorSyllabus}
-          />
-          <CourseCard
-            title="Gas Analysis"
-            description="Preview gas usage before executing transactions on-chain"
-            topics="Gas Breakdown"
-            contests=""
-            problems="Cost Optimization"
-            icon={<div className="text-white">⛽</div>}
+            icon={<IconWrapper gradient="from-violet-500 to-purple-400"><Package className="w-8 h-8 text-white" /></IconWrapper>}
             syllabusData={simulatorSyllabus}
           />
         </div>
@@ -360,7 +363,7 @@ export function TabsSection() {
     {
       id: "virtualnet",
       label: "VirtualNet",
-      isNew: true,
+      isNew: false,
       content: (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <CourseCard
@@ -369,7 +372,7 @@ export function TabsSection() {
             topics="Mainnet & Testnet Forks"
             contests=""
             problems="Isolated Environments"
-            icon={<div className="text-white">🌐</div>}
+            icon={<IconWrapper gradient="from-blue-500 to-cyan-400"><Globe className="w-8 h-8 text-white" /></IconWrapper>}
             syllabusData={virtualNetSyllabus}
           />
           <CourseCard
@@ -378,52 +381,17 @@ export function TabsSection() {
             topics="Unique Session IDs"
             contests=""
             problems="Complete History"
-            icon={<div className="text-white">📁</div>}
+            icon={<IconWrapper gradient="from-emerald-500 to-teal-400"><FolderOpen className="w-8 h-8 text-white" /></IconWrapper>}
             syllabusData={virtualNetSyllabus}
           />
           <CourseCard
             title="Fund Accounts"
             description="Fund test accounts with simulated tokens for testing"
-            topics="Simulated APT"
+            topics="Simulated MOVE"
             contests=""
             problems="Instant Funding"
-            icon={<div className="text-white">💰</div>}
+            icon={<IconWrapper gradient="from-yellow-500 to-amber-400"><Wallet className="w-8 h-8 text-white" /></IconWrapper>}
             syllabusData={virtualNetSyllabus}
-          />
-        </div>
-      ),
-    },
-    {
-      id: "debugging",
-      label: "Debugging",
-      content: (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <CourseCard
-            title="Error Analysis"
-            description="Get detailed error messages with abort codes and locations"
-            topics="Human-readable Errors"
-            contests=""
-            problems="Abort Code Lookup"
-            icon={<div className="text-white">🔍</div>}
-            syllabusData={debuggingSyllabus}
-          />
-          <CourseCard
-            title="State Inspector"
-            description="View events, resource changes, and state modifications"
-            topics="Event Viewer"
-            contests=""
-            problems="Resource Tracking"
-            icon={<div className="text-white">🔬</div>}
-            syllabusData={debuggingSyllabus}
-          />
-          <CourseCard
-            title="Transaction History"
-            description="Track all operations with detailed execution results"
-            topics="Operation Logs"
-            contests=""
-            problems="Before/After States"
-            icon={<div className="text-white">📊</div>}
-            syllabusData={debuggingSyllabus}
           />
         </div>
       ),
@@ -431,7 +399,7 @@ export function TabsSection() {
     {
       id: "use-cases",
       label: "Use Cases",
-      isNew: true,
+      isNew: false,
       content: (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <CourseCard
@@ -440,7 +408,7 @@ export function TabsSection() {
             topics="Full Flow Testing"
             contests=""
             problems="Risk-Free Transactions"
-            icon={<div className="text-white">💱</div>}
+            icon={<IconWrapper gradient="from-green-500 to-emerald-400"><ArrowLeftRight className="w-8 h-8 text-white" /></IconWrapper>}
             syllabusData={virtualNetSyllabus}
           />
           <CourseCard
@@ -449,7 +417,7 @@ export function TabsSection() {
             topics="Step-by-Step Replay"
             contests=""
             problems="Issue Identification"
-            icon={<div className="text-white">🐛</div>}
+            icon={<IconWrapper gradient="from-rose-500 to-pink-400"><Bug className="w-8 h-8 text-white" /></IconWrapper>}
             syllabusData={debuggingSyllabus}
           />
           <CourseCard
@@ -458,7 +426,7 @@ export function TabsSection() {
             topics="Safe Deployment"
             contests=""
             problems="Edge Case Testing"
-            icon={<div className="text-white">🚀</div>}
+            icon={<IconWrapper gradient="from-indigo-500 to-blue-400"><Rocket className="w-8 h-8 text-white" /></IconWrapper>}
             syllabusData={virtualNetSyllabus}
           />
         </div>

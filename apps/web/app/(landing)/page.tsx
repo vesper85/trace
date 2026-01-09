@@ -12,8 +12,6 @@ export default function Home() {
       <HeroSection />
       <TabsSection />
       <VideoSection />
-      <CompareSection />
-      <FaqSection />
       <Footer />
     </div>
   );

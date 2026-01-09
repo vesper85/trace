@@ -26,7 +26,7 @@ export function FundAccountPanel({
     onError,
 }: FundAccountPanelProps) {
     const [account, setAccount] = useState("");
-    const [amount, setAmount] = useState("100000000"); // 1 APT in Octa
+    const [amount, setAmount] = useState("100000000"); // 1 MOVE in Octa
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<{
         success: boolean;
@@ -56,7 +56,7 @@ export function FundAccountPanel({
             if (response.success) {
                 setResult({
                     success: true,
-                    message: `Funded ${response.account} with ${(response.amount / 100_000_000).toFixed(2)} APT. Balance: ${(response.after / 100_000_000).toFixed(2)} APT`,
+                    message: `Funded ${response.account} with ${(response.amount / 100_000_000).toFixed(2)} MOVE. Balance: ${(response.after / 100_000_000).toFixed(2)} MOVE`,
                 });
                 onSuccess();
             } else {
@@ -74,8 +74,8 @@ export function FundAccountPanel({
         }
     }
 
-    // Convert Octa to APT for display
-    const aptAmount = parseInt(amount || "0") / 100_000_000;
+    // Convert Octa to MOVE for display
+    const moveAmount = parseInt(amount || "0") / 100_000_000;
 
     return (
         <Card>
@@ -85,7 +85,7 @@ export function FundAccountPanel({
                     <CardTitle className="text-base">Fund Account</CardTitle>
                 </div>
                 <CardDescription>
-                    Add APT to an account in the fork session
+                    Add MOVE to an account in the fork session
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -110,7 +110,7 @@ export function FundAccountPanel({
                         disabled={!session || isLoading}
                     />
                     <p className="text-xs text-muted-foreground">
-                        ≈ {aptAmount.toFixed(2)} APT (1 APT = 100,000,000 Octa)
+                        ≈ {moveAmount.toFixed(2)} MOVE (1 MOVE = 100,000,000 Octa)
                     </p>
                 </div>
                 <Button
@@ -134,8 +134,8 @@ export function FundAccountPanel({
                 {result && (
                     <div
                         className={`flex items-start gap-2 p-3 rounded-lg ${result.success
-                                ? "bg-green-500/10 text-green-400"
-                                : "bg-red-500/10 text-red-400"
+                            ? "bg-green-500/10 text-green-400"
+                            : "bg-red-500/10 text-red-400"
                             }`}
                     >
                         {result.success ? (
