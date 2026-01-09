@@ -164,3 +164,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide scrollbar utility - used by landing page components */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Font compatibility aliases - map landing page fonts to app fonts */
+.font-poppins {
+  font-family: var(--font-sans);
+}
+
+.font-jost {
+  font-family: var(--font-sans);
+}

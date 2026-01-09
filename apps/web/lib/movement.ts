@@ -1,5 +1,5 @@
 import { Aptos, AptosConfig, Network, Account } from "@aptos-labs/ts-sdk";
-import { NetworkType, NETWORKS } from "../app/simulator/types";
+import { NetworkType, NETWORKS } from "../app/(app)/simulator/types";
 
 // create aptos client for a given network
 export function getMovementClient(network: NetworkType): Aptos {
@@ -80,21 +80,21 @@ export async function simulateTransaction(
 
     const senderAddress = input.senderAddress;
     const senderPublicKeyHex = input.senderPublicKeyHex;
-    
+
     try {
         // for simulation, the public key must derive to the sender's authentication key.
         // this is a fundamental requirement of the move vm.
-        
+
         // case 1: wallet is connected - use real sender address with wallet's public key
         if (senderAddress && senderPublicKeyHex) {
             console.log("Using wallet public key for simulation with real sender address");
-            
+
             // import ed25519publickey to create public key from hex
             const { Ed25519PublicKey } = await import("@aptos-labs/ts-sdk");
-            
+
             // create public key from hex string
             const publicKey = new Ed25519PublicKey(senderPublicKeyHex);
-            
+
             // build the transaction with the real sender address
             const transaction = await client.transaction.build.simple({
                 sender: senderAddress,
@@ -117,12 +117,12 @@ export async function simulateTransaction(
 
             return parseSimulationResponse(simulationResults[0]);
         }
-        
+
         // case 2: no wallet connected - use a generated account
         console.log("No wallet public key provided, using generated account for simulation");
-        
+
         const simulationAccount = Account.generate();
-        
+
         // build the transaction with the generated account's address
         const transaction = await client.transaction.build.simple({
             sender: simulationAccount.accountAddress.toString(),
@@ -146,7 +146,7 @@ export async function simulateTransaction(
         });
 
         const result = parseSimulationResponse(simulationResults[0]);
-        
+
         // add simulation metadata to indicate this was simulated with a temp account
         if (senderAddress && senderAddress !== simulationAccount.accountAddress.toString()) {
             result.rawResponse = {
@@ -157,7 +157,7 @@ export async function simulateTransaction(
                 _requestedSender: senderAddress,
             };
         }
-        
+
         return result;
     } catch (error) {
         console.error("Simulation error:", error);

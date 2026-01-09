@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { WalletProvider, QueryProvider } from "./providers";
-import { AppSidebar } from "./components";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = localFont({
@@ -15,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Movement Developer Tools",
+  title: "Trace",
   description: "Transaction simulator and developer tools for Movement L1",
 };
 
@@ -30,16 +29,7 @@ export default function RootLayout({
         <ThemeProvider>
           <QueryProvider>
             <WalletProvider>
-              <div className="flex min-h-screen">
-                {/* Sidebar - fixed width */}
-                <aside className="w-64 flex-shrink-0 border-r bg-card">
-                  <AppSidebar />
-                </aside>
-                {/* Main content - fills remaining space */}
-                <main className="flex-1 min-w-0 bg-background">
-                  {children}
-                </main>
-              </div>
+              {children}
             </WalletProvider>
           </QueryProvider>
         </ThemeProvider>
