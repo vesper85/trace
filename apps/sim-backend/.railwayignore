@@ -1,0 +1,7 @@
+# Ignore heavy dependencies and git data
+node_modules
+.git
+.next
+
+# ⚠️ IMPORTANT: Do NOT list "bin/" or "bin/movement" here.
+# By omitting it, Railway will forcefully include it, even if it's in .gitignore.

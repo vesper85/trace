@@ -1,0 +1,32 @@
+# Ignore git and development files
+.git
+.gitignore
+.env
+.env.*
+*.md
+*.log
+
+# Ignore node_modules (will be installed fresh)
+node_modules
+
+# Ignore test files
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+
+
+
+# Ignore build artifacts
+dist
+.turbo
+
+# Ignore IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Ignore Railway config
+railway.toml
+railway.json
+.railwayignore

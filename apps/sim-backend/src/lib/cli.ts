@@ -193,8 +193,66 @@ export async function getSessionDefaultAccount(sessionId: string): Promise<strin
 }
 
 /**
+ * Converts a hex string to a Uint8Array
+ */
+function hexToBytes(hex: string): Uint8Array {
+    const cleanHex = hex.startsWith('0x') ? hex.slice(2) : hex;
+    const bytes = new Uint8Array(cleanHex.length / 2);
+    for (let i = 0; i < cleanHex.length; i += 2) {
+        bytes[i / 2] = parseInt(cleanHex.substring(i, i + 2), 16);
+    }
+    return bytes;
+}
+
+/**
+ * Decodes a little-endian u64 from bytes
+ */
+function decodeU64LE(bytes: Uint8Array, offset: number = 0): bigint {
+    let value = BigInt(0);
+    for (let i = 7; i >= 0; i--) {
+        value = value * BigInt(256) + BigInt(bytes[offset + i] ?? 0);
+    }
+    return value;
+}
+
+/**
+ * Decodes the balance from a BCS-encoded CoinStore resource
+ * 
+ * Delta.json CoinStore BCS structure:
+ * - byte 0: ULEB128 resource count (typically 0x01)
+ * - byte 1: WriteOp variant tag (e.g., 0x69 for write)
+ * - bytes 2-9: coin.value (u64, little-endian) - THE BALANCE
+ * - bytes 10+: frozen flag, deposit_events, withdraw_events
+ */
+function decodeCoinStoreBalance(hexData: string): bigint | null {
+    try {
+        const bytes = hexToBytes(hexData);
+
+        // Skip ULEB128 resource count (first byte, typically 0x01)
+        let offset = 0;
+        while (offset < bytes.length && (bytes[offset]! & 0x80) !== 0) {
+            offset++;
+        }
+        offset++; // Skip the last byte of ULEB128
+
+        // Skip the WriteOp variant tag byte (e.g., 0x69)
+        offset++;
+
+        // Now we're at the CoinStore data
+        // The first field is `coin: Coin<CoinType>` which itself contains `value: u64`
+        // So the balance is at offset as a u64 (8 bytes, little-endian)
+        if (offset + 8 <= bytes.length) {
+            return decodeU64LE(bytes, offset);
+        }
+        return null;
+    } catch {
+        return null;
+    }
+}
+
+/**
  * Gets account balance from the session's delta.json
- * Looks for CoinStore<AptosCoin> resource for the account
+ * Decodes the CoinStore<AptosCoin> resource to get the actual balance
  */
 export async function getAccountBalance(sessionId: string, account: string): Promise<number> {
     try {
@@ -203,17 +261,25 @@ export async function getAccountBalance(sessionId: string, account: string): Pro
         // Normalize account address (remove 0x prefix for matching)
         const normalizedAccount = account.replace(/^0x/, '').toLowerCase();
 
-        // Look for CoinStore resource in delta
+        // Look for CoinStore resource in delta and decode the balance directly
         // Format: "resource::0xcc26c1...::0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
-        for (const key of Object.keys(delta)) {
-            if (key.includes(normalizedAccount) && key.includes('CoinStore') && key.includes('aptos_coin::AptosCoin')) {
-                // The value is a hex-encoded BCS serialized resource
-                // For now, we'll get the balance from fund operations instead
-                break;
+        for (const [key, value] of Object.entries(delta)) {
+            if (key.includes(normalizedAccount) &&
+                key.includes('CoinStore') &&
+                key.includes('aptos_coin::AptosCoin') &&
+                typeof value === 'string') {
+
+                // Decode the BCS-encoded CoinStore to get the balance
+                const balance = decodeCoinStoreBalance(value);
+                if (balance !== null) {
+                    // Return the decoded balance (as number, safe for typical balances)
+                    return Number(balance);
+                }
             }
         }
 
-        // Get balance from fund operations - more reliable
+        // Fallback: If no CoinStore found in delta, get balance from fund operations
+        // This happens when no transactions have modified the account yet
         const operations = await listSessionOperations(sessionId);
         let totalBalance = 0;
 
@@ -231,13 +297,12 @@ export async function getAccountBalance(sessionId: string, account: string): Pro
             }
         }
 
-        // Now subtract gas used from execute operations for this account
+        // Subtract gas used from execute operations for this account (fallback path only)
         for (const opName of operations) {
             if (opName.includes('execute')) {
                 const opContents = await readOperationContents(sessionId, opName);
                 const execData = opContents.summary?.execute_transaction;
                 if (execData?.fee_statement) {
-                    // Each execution costs storage_fee_octas from the account balance
                     totalBalance -= execData.fee_statement.storage_fee_octas;
                 }
             }
