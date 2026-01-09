@@ -77,9 +77,6 @@ importers:
         specifier: ^3.4.7
         version: 3.4.7
     devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../packages/typescript-config
       '@types/node':
         specifier: ^22.15.3
         version: 22.15.3
