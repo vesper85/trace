@@ -4,7 +4,7 @@ services:
   # Simulation Backend
   sim-backend:
     build:
-      context: ./apps/sim-backend
+      context: .
       dockerfile: Dockerfile
     container_name: sim-backend
     restart: unless-stopped
@@ -12,11 +12,33 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       NODE_ENV: production
       PORT: 3005
-    ports:
-      - "3005:3005"
+    expose:
+      - "3005"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
       interval: 30s
       timeout: 10s
       start_period: 30s
       retries: 3
+    networks:
+      - trace-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - sim-backend
+    networks:
+      - trace-network
+
+networks:
+  trace-network:
+    driver: bridge
