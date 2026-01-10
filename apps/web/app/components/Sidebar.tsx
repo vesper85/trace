@@ -14,16 +14,16 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navItems = [
     {
-        title: "Simulator",
-        href: "/simulator",
-        icon: Play,
-        description: "Simulate transactions",
-    },
-    {
         title: "VirtualNet",
         href: "/virtualnet",
         icon: Network,
         description: "Fork & test on virtual network",
+    },
+    {
+        title: "Simulator",
+        href: "/simulator",
+        icon: Play,
+        description: "Simulate transactions",
     },
 ];
 
