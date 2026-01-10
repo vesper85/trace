@@ -1,0 +1,59 @@
+# Payloads
+
+Raw example payloads for the Trace API.
+
+## Execute Transaction
+
+```json
+{
+    "functionId": "0x6a164188af7bb6a8268339343a5afe0242292713709af8801dafba3a054dc2f2::pool::lend",
+    "typeArguments": ["0x1::aptos_coin::AptosCoin"],
+    "args": [
+        "u64:1",
+        "u64:50000000",
+        "bool:true"
+    ]
+}
+```
+
+## Coin Transfer
+
+```json
+{
+    "functionId": "0x1::coin::transfer",
+    "typeArguments": ["0x1::aptos_coin::AptosCoin"],
+    "args": [
+        "address:0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        "u64:1000000"
+    ]
+}
+```
+
+## View Balance
+
+```json
+{
+    "functionId": "0x1::coin::balance",
+    "typeArguments": ["0x1::aptos_coin::AptosCoin"],
+    "args": ["address:0x1"]
+}
+```
+
+## Fund Account
+
+```json
+{
+    "account": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "amount": 100000000
+}
+```
+
+## Create Session
+
+```json
+{
+    "userId": "your-user-id",
+    "name": "My Test Session",
+    "network": "movement-mainnet"
+}
+```
