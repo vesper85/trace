@@ -4,7 +4,7 @@ services:
   # Simulation Backend
   sim-backend:
     build:
-      context: .
+      context: ./apps/sim-backend
       dockerfile: Dockerfile
     container_name: sim-backend
     restart: unless-stopped
