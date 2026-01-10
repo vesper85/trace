@@ -19,18 +19,18 @@ export function VideoSection() {
 
   const videoTabs: VideoTab[] = [
     {
-      id: "simulator",
-      label: "Transaction Simulator",
-      subLabel: "Simulate any transaction before executing on-chain",
-      title: "Preview & Test Transactions",
-      videoUrl: "/videos/V1.mp4",
-    },
-    {
       id: "virtualnet",
       label: "VirtualNet",
       subLabel: "Fork networks to create isolated testing environments",
       title: "Forked Network Sessions",
       videoUrl: "/videos/V2.mp4",
+    },
+    {
+      id: "simulator",
+      label: "Transaction Simulator",
+      subLabel: "Simulate any transaction before executing on-chain",
+      title: "Preview & Test Transactions",
+      videoUrl: "/videos/V1.mp4",
     },
     {
       id: "contract-loader",
