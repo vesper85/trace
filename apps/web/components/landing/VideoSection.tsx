@@ -45,7 +45,6 @@ export function VideoSection() {
       subLabel: "Inspect events, resources, and state changes",
       title: "Debug State Changes",
       videoUrl: "/videos/V4.mp4",
-      isHighlighted: true,
     },
   ];
 

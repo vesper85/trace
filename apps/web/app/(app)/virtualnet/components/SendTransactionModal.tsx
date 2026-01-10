@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Send, Loader2 } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -165,12 +166,19 @@ export function SendTransactionModal({
                     args,
                 });
             } else {
+                // Show info toast for entry function simulation
+                toast.info("Simulating transaction...", {
+                    description: "This may take a few seconds. Please wait while we execute and analyze the transaction.",
+                    duration: 5000,
+                });
+
                 const result = await executeTransaction(session.id, {
                     functionId,
                     typeArguments: filteredTypeArgs,
                     args,
                     sender: senderAddress || undefined, // Optional - backend can use default
                 });
+
 
                 onSuccess({
                     functionId,

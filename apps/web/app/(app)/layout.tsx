@@ -1,4 +1,5 @@
 import { AppSidebar } from "../components";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function AppLayout({
     children,
@@ -15,6 +16,8 @@ export default function AppLayout({
             <main className="flex-1 min-w-0 bg-background">
                 {children}
             </main>
+            <Toaster position="top-right" />
         </div>
     );
 }
+
