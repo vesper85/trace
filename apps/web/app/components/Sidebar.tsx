@@ -30,7 +30,7 @@ const navItems = [
 const externalLinks = [
     {
         title: "Documentation",
-        href: "http://localhost:3002",
+        href: "https://docs.tracce.lol",
         icon: BookOpen,
     },
 ];

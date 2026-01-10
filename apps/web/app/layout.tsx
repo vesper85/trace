@@ -16,6 +16,11 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Trace",
   description: "Transaction simulator and developer tools for Movement L1",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

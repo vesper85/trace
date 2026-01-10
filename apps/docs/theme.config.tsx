@@ -35,7 +35,7 @@ const config: DocsThemeConfig = {
             <meta property="og:title" content="Trace Documentation" />
             <meta property="og:description" content="Documentation for Trace - Movement L1 debugging and development tools" />
             <meta property="og:image" content="/logo.png" />
-            <link rel="icon" href="/logo.png" type="image/png" />
+            <link rel="icon" href="/favicon.png" type="image/png" />
         </>
     ),
     useNextSeoProps() {
