@@ -65,7 +65,7 @@ export default function HeroSection() {
                   variant="white"
                 />
               </a>
-              <a href="https://trace-docs-eight.vercel.app/" target="_blank" rel="noopener noreferrer">
+              <a href="https://docs.tracce.lol/" target="_blank" rel="noopener noreferrer">
                 <GradientButton
                   text="View Docs"
                   className="rounded-lg md:h-10 md:px-6"

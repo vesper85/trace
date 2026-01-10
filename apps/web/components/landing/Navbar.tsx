@@ -101,7 +101,7 @@ export function Navbar() {
 
           {/* <div className="flex items-center gap-2">
             <a
-              href="https://trace-docs-eight.vercel.app/"
+              href="https://docs.tracce.lol/"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -114,7 +114,7 @@ export function Navbar() {
         <div className="lg:hidden flex items-center gap-2">
           <ThemeSwitcher />
           <a
-            href="https://trace-docs-eight.vercel.app/"
+            href="https://docs.tracce.lol/"
             target="_blank"
             rel="noopener noreferrer"
           >

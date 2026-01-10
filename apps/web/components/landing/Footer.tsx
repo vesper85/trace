@@ -64,7 +64,7 @@ export function Footer() {
             </TooltipProvider>
 
             <a
-              href="https://trace-docs-eight.vercel.app/"
+              href="https://docs.tracce.lol/"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white px-4 py-2 rounded-lg font-medium transition-all"
