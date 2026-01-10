@@ -1,5 +1,9 @@
 # Overview
 
+<div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+  <img src="/logo.png" alt="Trace Logo" style={{ height: '48px', width: 'auto' }} />
+</div>
+
 Welcome to **Trace** — a powerful suite of debugging and development tools for the Movement L1 blockchain.
 
 ## What is Trace?
@@ -10,6 +14,7 @@ Trace provides developers with essential tools to simulate, debug, and test smar
 - **Fork networks** to create isolated testing environments
 - **Debug failed transactions** with detailed error messages and gas analysis
 - **Inspect state changes** including events and resource modifications
+- **Build and test** complex DeFi flows without risking real assets
 
 ## Key Features
 
@@ -31,6 +36,83 @@ Create forked network sessions to test complex transaction sequences in isolatio
 - Fund test accounts with simulated tokens
 - Full transaction history per session
 
+### 🔌 REST API
+
+Integrate Trace directly into your development workflow with our comprehensive API.
+
+- Programmatic session management
+- CI/CD pipeline integration
+- Custom tooling support
+- Multi-language support (TypeScript, Python, cURL)
+
+## Quick Example
+
+Here's how easy it is to simulate a transaction with Trace:
+
+```typescript
+// Create a session
+const session = await fetch("https://trace-api.example.com/sessions/init", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        userId: "my-user",
+        network: "movement-mainnet",
+    }),
+}).then(r => r.json());
+
+// Fund your account
+await fetch(`https://trace-api.example.com/sessions/${session.sessionId}/fund`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        account: session.defaultAccount,
+        amount: 100000000, // 1 APT
+    }),
+});
+
+// Execute a transaction
+const result = await fetch(`https://trace-api.example.com/sessions/${session.sessionId}/execute`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        functionId: "0x1::coin::transfer",
+        typeArguments: ["0x1::aptos_coin::AptosCoin"],
+        args: ["address:0x2", "u64:1000000"],
+    }),
+}).then(r => r.json());
+
+console.log("Success:", result.success);
+console.log("Gas used:", result.gasUsed);
+```
+
 ## Getting Started
 
-Ready to dive in? Check out the [Getting Started](/getting-started) guide to begin using Trace.
+Ready to dive in? Here are your next steps:
+
+import { Cards, Card } from 'nextra/components'
+
+<Cards>
+  <Card title="Getting Started" href="/getting-started">
+    Set up Trace and simulate your first transaction in minutes.
+  </Card>
+  <Card title="Simulator" href="/simulator">
+    Learn how to use the web-based transaction simulator.
+  </Card>
+  <Card title="VirtualNet" href="/virtualnet">
+    Create forked sessions for complex testing scenarios.
+  </Card>
+  <Card title="API Reference" href="/api-reference">
+    Complete API documentation for programmatic access.
+  </Card>
+  <Card title="Examples" href="/examples">
+    Ready-to-use code examples in TypeScript, Python, and more.
+  </Card>
+</Cards>
+
+## Supported Networks
+
+| Network | Status | Description |
+|---------|--------|-------------|
+| **Movement Mainnet** | ✅ Production | Full support for production simulations |
+| **Movement Testnet** | ✅ Production | Test your contracts on testnet |
+| **Custom RPC** | ✅ Supported | Connect to any Movement-compatible node |

@@ -1,0 +1,540 @@
+# Examples
+
+This page provides complete, runnable code examples to help you get started with the Trace API. These examples demonstrate common workflows and can be adapted for your specific use cases.
+
+## Quick Start: TypeScript/JavaScript
+
+### Prerequisites
+
+You'll need Node.js or Bun installed. These examples use the native `fetch` API.
+
+```bash
+# Using Bun (recommended)
+bun run your-script.ts
+
+# Using Node.js (v18+)
+node your-script.js
+```
+
+---
+
+## Complete Simulation Example
+
+This example demonstrates the full workflow of creating a session, funding an account, and executing transactions. It's based on the internal test scripts used by the Trace team.
+
+```typescript
+/**
+ * Complete Trace API Example
+ * 
+ * This script demonstrates:
+ * 1. Creating a forked session on Movement mainnet
+ * 2. Funding the session account with APT
+ * 3. Executing a lending transaction
+ * 4. Executing a withdraw transaction
+ */
+
+const BASE_URL = "http://localhost:3001"; // Change to your Trace deployment URL
+
+async function main() {
+    console.log("🚀 Starting simulation test...\n");
+
+    // =========================================
+    // Step 1: Create a fork session
+    // =========================================
+    console.log("1️⃣ Creating fork session on Movement mainnet...");
+    
+    const initResponse = await fetch(`${BASE_URL}/sessions/init`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            userId: "example-user",
+            name: "My Test Session",
+            network: "movement-mainnet",
+        }),
+    });
+
+    if (!initResponse.ok) {
+        const error = await initResponse.json();
+        console.log("   ❌ Failed to create session:", error);
+        return;
+    }
+
+    const session = await initResponse.json();
+    console.log("   ✅ Session created:", session.sessionId);
+    console.log("   Default Account:", session.defaultAccount);
+
+    const sessionId = session.sessionId;
+    const defaultAccount = session.defaultAccount;
+
+    if (!defaultAccount) {
+        console.log("   ❌ No default account found in session");
+        return;
+    }
+
+    try {
+        // =========================================
+        // Step 2: Fund the session account
+        // =========================================
+        console.log("\n2️⃣ Funding session account with 1 APT...");
+        
+        const fundResponse = await fetch(`${BASE_URL}/sessions/${sessionId}/fund`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                account: defaultAccount,
+                amount: 100000000, // 1 APT = 100,000,000 octas
+            }),
+        });
+
+        if (!fundResponse.ok) {
+            const error = await fundResponse.json();
+            console.log("   ❌ Failed to fund:", error);
+        } else {
+            const fundResult = await fundResponse.json();
+            console.log("   ✅ Account funded!");
+            console.log("   Balance before:", fundResult.before);
+            console.log("   Balance after:", fundResult.after);
+        }
+
+        // =========================================
+        // Step 3: Execute a lending transaction
+        // =========================================
+        console.log("\n3️⃣ Executing lend transaction...");
+        console.log("   Function: pool::lend");
+        console.log("   Amount: 0.5 APT");
+
+        const lendResponse = await fetch(`${BASE_URL}/sessions/${sessionId}/execute`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                functionId: "0x6a164188af7bb6a8268339343a5afe0242292713709af8801dafba3a054dc2f2::pool::lend",
+                typeArguments: ["0x1::aptos_coin::AptosCoin"],
+                args: [
+                    "u64:1",        // position_id
+                    "u64:50000000", // amount (0.5 APT)
+                    "bool:true"     // some_flag
+                ],
+            }),
+        });
+
+        const lendResult = await lendResponse.json();
+        
+        if (lendResult.success) {
+            console.log("   ✅ Lend transaction successful!");
+            console.log("   Gas used:", lendResult.gasUsed);
+            console.log("   Status:", lendResult.status);
+            
+            if (lendResult.events && lendResult.events.length > 0) {
+                console.log("   Events emitted:", lendResult.events.length);
+            }
+        } else {
+            console.log("   ❌ Lend transaction failed:", lendResult.error || lendResult.status);
+        }
+
+        // =========================================
+        // Step 4: Execute a withdraw transaction
+        // =========================================
+        console.log("\n4️⃣ Executing withdraw transaction...");
+        console.log("   Function: pool::withdraw");
+        console.log("   Amount: 0.25 APT");
+
+        const withdrawResponse = await fetch(`${BASE_URL}/sessions/${sessionId}/execute`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                functionId: "0x6a164188af7bb6a8268339343a5afe0242292713709af8801dafba3a054dc2f2::pool::withdraw",
+                typeArguments: ["0x1::aptos_coin::AptosCoin"],
+                args: [
+                    "u64:1",        // position_id
+                    "u64:25000000", // amount (0.25 APT)
+                ],
+            }),
+        });
+
+        const withdrawResult = await withdrawResponse.json();
+        
+        if (withdrawResult.success) {
+            console.log("   ✅ Withdraw transaction successful!");
+            console.log("   Gas used:", withdrawResult.gasUsed);
+        } else {
+            console.log("   ❌ Withdraw transaction failed:", withdrawResult.error || withdrawResult.status);
+        }
+
+        // =========================================
+        // Step 5: Check session details
+        // =========================================
+        console.log("\n5️⃣ Fetching session summary...");
+        
+        const sessionResponse = await fetch(`${BASE_URL}/sessions/${sessionId}`);
+        const sessionDetails = await sessionResponse.json();
+        
+        console.log("   Total transactions:", sessionDetails.transactions?.length || 0);
+        console.log("   Account balance:", sessionDetails.defaultAccount?.balance || 0);
+
+    } finally {
+        // =========================================
+        // Cleanup: Delete the session
+        // =========================================
+        console.log("\n6️⃣ Cleaning up session...");
+        
+        await fetch(`${BASE_URL}/sessions/${sessionId}`, {
+            method: "DELETE",
+        });
+        
+        console.log("   ✅ Session deleted");
+    }
+
+    console.log("\n✨ Done!");
+}
+
+main().catch(console.error);
+```
+
+---
+
+## View Function Example
+
+Query on-chain data without modifying state:
+
+```typescript
+const BASE_URL = "http://localhost:3001";
+
+async function queryBalance(sessionId: string, account: string) {
+    const response = await fetch(`${BASE_URL}/sessions/${sessionId}/view`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            functionId: "0x1::coin::balance",
+            typeArguments: ["0x1::aptos_coin::AptosCoin"],
+            args: [`address:${account}`],
+        }),
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+        console.log("Balance:", result.result[0], "octas");
+        console.log("Balance:", result.result[0] / 100_000_000, "APT");
+    } else {
+        console.error("Failed to query balance:", result.error);
+    }
+    
+    return result;
+}
+```
+
+---
+
+## Resource Query Example
+
+Read account resources directly:
+
+```typescript
+const BASE_URL = "http://localhost:3001";
+
+async function getAccountResource(sessionId: string, account: string, resourceType: string) {
+    const url = new URL(`${BASE_URL}/sessions/${sessionId}/resource`);
+    url.searchParams.set("account", account);
+    url.searchParams.set("resourceType", resourceType);
+
+    const response = await fetch(url.toString());
+    const result = await response.json();
+
+    if (result.success) {
+        console.log("Resource data:", JSON.stringify(result.resource, null, 2));
+    } else {
+        console.error("Failed to get resource:", result.error);
+    }
+
+    return result;
+}
+
+// Example usage:
+// getAccountResource(
+//     sessionId,
+//     "0x1",
+//     "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
+// );
+```
+
+---
+
+## Error Handling Example
+
+Properly handle API errors:
+
+```typescript
+async function executeWithErrorHandling(
+    sessionId: string,
+    functionId: string,
+    typeArgs: string[],
+    args: string[]
+) {
+    try {
+        const response = await fetch(`${BASE_URL}/sessions/${sessionId}/execute`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                functionId,
+                typeArguments: typeArgs,
+                args,
+            }),
+        });
+
+        // Check HTTP status
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`HTTP ${response.status}: ${error.error || error.details}`);
+        }
+
+        const result = await response.json();
+
+        // Check transaction status
+        if (!result.success) {
+            console.error("Transaction failed!");
+            console.error("Status:", result.status);
+            console.error("VM Status:", result.vmStatus);
+            
+            // Parse abort code if present
+            if (result.vmStatus?.includes("ABORTED")) {
+                const match = result.vmStatus.match(/code: (\d+)/);
+                if (match) {
+                    console.error("Abort code:", match[1]);
+                }
+            }
+            
+            return { success: false, error: result.vmStatus };
+        }
+
+        return result;
+
+    } catch (error) {
+        console.error("Request failed:", error);
+        throw error;
+    }
+}
+```
+
+---
+
+## Session Management Example
+
+Manage multiple sessions:
+
+```typescript
+const BASE_URL = "http://localhost:3001";
+const USER_ID = "my-app-user";
+
+class TraceSessionManager {
+    private sessions: Map<string, string> = new Map();
+
+    async createSession(name: string, network: string = "movement-mainnet") {
+        const response = await fetch(`${BASE_URL}/sessions/init`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                userId: USER_ID,
+                name,
+                network,
+            }),
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            this.sessions.set(name, result.sessionId);
+            console.log(`Created session "${name}": ${result.sessionId}`);
+        }
+        
+        return result;
+    }
+
+    async listSessions() {
+        const response = await fetch(`${BASE_URL}/sessions?userId=${USER_ID}`);
+        const result = await response.json();
+        
+        console.log("Your sessions:");
+        for (const session of result.sessions) {
+            console.log(`  - ${session.name} (${session.id})`);
+            console.log(`    Network: ${session.network}`);
+            console.log(`    Operations: ${session.ops}`);
+        }
+        
+        return result.sessions;
+    }
+
+    async deleteSession(name: string) {
+        const sessionId = this.sessions.get(name);
+        
+        if (!sessionId) {
+            console.error(`Session "${name}" not found locally`);
+            return;
+        }
+
+        await fetch(`${BASE_URL}/sessions/${sessionId}`, {
+            method: "DELETE",
+        });
+
+        this.sessions.delete(name);
+        console.log(`Deleted session "${name}"`);
+    }
+
+    async cleanupAll() {
+        for (const [name, sessionId] of this.sessions) {
+            await fetch(`${BASE_URL}/sessions/${sessionId}`, {
+                method: "DELETE",
+            });
+            console.log(`Deleted session "${name}"`);
+        }
+        this.sessions.clear();
+    }
+}
+
+// Usage:
+// const manager = new TraceSessionManager();
+// await manager.createSession("DeFi Test");
+// await manager.listSessions();
+// await manager.cleanupAll();
+```
+
+---
+
+## Python Example
+
+For Python developers:
+
+```python
+import requests
+import json
+
+BASE_URL = "http://localhost:3001"
+
+def create_session(user_id: str, name: str, network: str = "movement-mainnet"):
+    """Create a new simulation session."""
+    response = requests.post(
+        f"{BASE_URL}/sessions/init",
+        json={
+            "userId": user_id,
+            "name": name,
+            "network": network,
+        }
+    )
+    response.raise_for_status()
+    return response.json()
+
+def fund_account(session_id: str, account: str, amount: int):
+    """Fund an account with simulated tokens."""
+    response = requests.post(
+        f"{BASE_URL}/sessions/{session_id}/fund",
+        json={
+            "account": account,
+            "amount": amount,
+        }
+    )
+    response.raise_for_status()
+    return response.json()
+
+def execute_transaction(
+    session_id: str,
+    function_id: str,
+    type_args: list = None,
+    args: list = None
+):
+    """Execute a transaction in the session."""
+    response = requests.post(
+        f"{BASE_URL}/sessions/{session_id}/execute",
+        json={
+            "functionId": function_id,
+            "typeArguments": type_args or [],
+            "args": args or [],
+        }
+    )
+    response.raise_for_status()
+    return response.json()
+
+def delete_session(session_id: str):
+    """Delete a session."""
+    response = requests.delete(f"{BASE_URL}/sessions/{session_id}")
+    response.raise_for_status()
+    return response.json()
+
+
+# Example usage
+if __name__ == "__main__":
+    # Create session
+    session = create_session("python-user", "Python Test")
+    session_id = session["sessionId"]
+    account = session["defaultAccount"]
+    
+    print(f"Created session: {session_id}")
+    print(f"Default account: {account}")
+    
+    # Fund account
+    fund_result = fund_account(session_id, account, 100_000_000)
+    print(f"Funded account: {fund_result}")
+    
+    # Execute transaction
+    tx_result = execute_transaction(
+        session_id,
+        "0x1::coin::transfer",
+        ["0x1::aptos_coin::AptosCoin"],
+        ["address:0x2", "u64:1000000"]
+    )
+    print(f"Transaction result: {json.dumps(tx_result, indent=2)}")
+    
+    # Cleanup
+    delete_session(session_id)
+    print("Session deleted")
+```
+
+---
+
+## cURL Examples
+
+For command-line testing:
+
+```bash
+# Create a session
+curl -X POST http://localhost:3001/sessions/init \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "cli-user",
+    "name": "CLI Test",
+    "network": "movement-mainnet"
+  }'
+
+# Fund an account (replace SESSION_ID and ACCOUNT)
+curl -X POST http://localhost:3001/sessions/SESSION_ID/fund \
+  -H "Content-Type: application/json" \
+  -d '{
+    "account": "ACCOUNT_ADDRESS",
+    "amount": 100000000
+  }'
+
+# Execute a transaction
+curl -X POST http://localhost:3001/sessions/SESSION_ID/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "functionId": "0x1::coin::transfer",
+    "typeArguments": ["0x1::aptos_coin::AptosCoin"],
+    "args": ["address:0x2", "u64:1000000"]
+  }'
+
+# Get session details
+curl http://localhost:3001/sessions/SESSION_ID
+
+# Delete session
+curl -X DELETE http://localhost:3001/sessions/SESSION_ID
+```
+
+---
+
+import { Callout } from 'nextra/components'
+
+<Callout type="tip">
+  All examples use local URLs. In production, replace `http://localhost:3001` with your deployed Trace API URL.
+</Callout>
+
+<Callout type="info">
+  Need help? Check the [API Reference](/api-reference) for complete endpoint documentation.
+</Callout>

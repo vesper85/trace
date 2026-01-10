@@ -1,0 +1,303 @@
+# API Reference
+
+Trace provides a REST API that allows you to programmatically interact with the simulation backend. This is useful for integrating Trace into your development workflow, CI/CD pipelines, or building custom tooling.
+
+## Base URL
+
+```
+https://your-trace-deployment.example.com
+```
+
+For local development:
+```
+http://localhost:3001
+```
+
+## Authentication
+
+Currently, sessions are scoped by `userId`. Pass your unique identifier when creating sessions to keep them organized.
+
+---
+
+## Sessions API
+
+### Create a Session
+
+Initialize a new forked network session.
+
+**Endpoint:** `POST /sessions/init`
+
+**Request Body:**
+```json
+{
+    "userId": "your-user-id",
+    "name": "My Test Session",
+    "network": "movement-mainnet"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `userId` | string | ✅ | Your unique identifier |
+| `name` | string | ❌ | Human-readable session name |
+| `network` | string | ✅ | Network to fork: `movement-mainnet`, `movement-testnet`, or `custom` |
+| `customUrl` | string | ❌ | Required if network is `custom` |
+| `networkVersion` | number | ❌ | Optional network version |
+| `apiKey` | string | ❌ | Optional API key for authenticated endpoints |
+
+**Response:**
+```json
+{
+    "success": true,
+    "sessionId": "sess-m5abc123-xyz789",
+    "defaultAccount": "0x1234...abcd",
+    "config": {
+        "id": "sess-m5abc123-xyz789",
+        "name": "My Test Session",
+        "network": "movement-mainnet",
+        "nodeUrl": "https://mainnet.movementnetwork.xyz/v1",
+        "createdAt": "2026-01-10T06:30:00.000Z",
+        "ops": 0
+    }
+}
+```
+
+### List Sessions
+
+Get all sessions for a user.
+
+**Endpoint:** `GET /sessions?userId=your-user-id`
+
+**Response:**
+```json
+{
+    "sessions": [
+        {
+            "id": "sess-m5abc123-xyz789",
+            "userId": "your-user-id",
+            "name": "My Test Session",
+            "network": "movement-mainnet",
+            "nodeUrl": "https://mainnet.movementnetwork.xyz/v1",
+            "createdAt": "2026-01-10T06:30:00.000Z",
+            "ops": 5
+        }
+    ]
+}
+```
+
+### Get Session Details
+
+Get detailed information about a specific session including transaction history.
+
+**Endpoint:** `GET /sessions/:sessionId`
+
+**Response:**
+```json
+{
+    "config": {
+        "id": "sess-m5abc123-xyz789",
+        "name": "My Test Session",
+        "network": "movement-mainnet",
+        "nodeUrl": "https://mainnet.movementnetwork.xyz/v1",
+        "createdAt": "2026-01-10T06:30:00.000Z",
+        "ops": 5
+    },
+    "defaultAccount": {
+        "address": "0x1234...abcd",
+        "balance": 100000000
+    },
+    "transactions": [
+        {
+            "id": "tx-123",
+            "functionId": "0x1::coin::transfer",
+            "sender": "0x1234...abcd",
+            "success": true,
+            "status": "Executed",
+            "gasUsed": 500,
+            "timestamp": "2026-01-10T06:35:00.000Z"
+        }
+    ]
+}
+```
+
+### Delete Session
+
+Remove a session and all associated data.
+
+**Endpoint:** `DELETE /sessions/:sessionId`
+
+**Response:**
+```json
+{
+    "success": true
+}
+```
+
+---
+
+## Simulation API
+
+### Fund Account
+
+Add simulated tokens to an account within a session.
+
+**Endpoint:** `POST /sessions/:sessionId/fund`
+
+**Request Body:**
+```json
+{
+    "account": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "amount": 100000000
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `account` | string | Account address to fund |
+| `amount` | number | Amount in octas (1 APT = 100,000,000 octas) |
+
+**Response:**
+```json
+{
+    "success": true,
+    "account": "0x1234...abcd",
+    "amount": 100000000,
+    "before": 0,
+    "after": 100000000
+}
+```
+
+### Execute Transaction
+
+Execute an entry function within the session's virtual environment.
+
+**Endpoint:** `POST /sessions/:sessionId/execute`
+
+**Request Body:**
+```json
+{
+    "functionId": "0x1::coin::transfer",
+    "typeArguments": ["0x1::aptos_coin::AptosCoin"],
+    "args": ["address:0xrecipient", "u64:1000000"]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `functionId` | string | Full function path: `address::module::function` |
+| `typeArguments` | string[] | Generic type parameters |
+| `args` | string[] | Function arguments in `type:value` format |
+| `sender` | string | Optional. Sender address (defaults to session account) |
+
+**Argument Format:**
+
+Arguments must be prefixed with their type:
+
+| Type | Format | Example |
+|------|--------|---------|
+| `u8`, `u64`, `u128` | `u64:value` | `u64:1000000` |
+| `bool` | `bool:value` | `bool:true` |
+| `address` | `address:value` | `address:0x1` |
+| `vector<u8>` | `hex:0x...` | `hex:0x1234` |
+| `vector<vector<u8>>` | `hex:["0x...", "0x..."]` | `hex:["0x1234", "0x5678"]` |
+
+**Response:**
+```json
+{
+    "success": true,
+    "status": "Executed",
+    "gasUsed": 500,
+    "vmStatus": "Executed successfully",
+    "events": [
+        {
+            "type": "0x1::coin::DepositEvent",
+            "data": { "amount": "1000000" }
+        }
+    ],
+    "writeSet": [
+        {
+            "address": "0x1234...abcd",
+            "type": "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>",
+            "data": { "coin": { "value": "99000000" } }
+        }
+    ]
+}
+```
+
+---
+
+## View API
+
+### Call View Function
+
+Execute a read-only view function.
+
+**Endpoint:** `POST /sessions/:sessionId/view`
+
+**Request Body:**
+```json
+{
+    "functionId": "0x1::coin::balance",
+    "typeArguments": ["0x1::aptos_coin::AptosCoin"],
+    "args": ["address:0x1"]
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "result": [1000000000],
+    "gasUsed": 0
+}
+```
+
+### View Resource
+
+Read a resource from an account.
+
+**Endpoint:** `GET /sessions/:sessionId/resource?account=0x1&resourceType=0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>`
+
+**Response:**
+```json
+{
+    "success": true,
+    "resource": {
+        "coin": {
+            "value": "1000000000"
+        },
+        "deposit_events": { "counter": "10" },
+        "withdraw_events": { "counter": "5" }
+    }
+}
+```
+
+---
+
+## Error Handling
+
+All API endpoints return consistent error responses:
+
+```json
+{
+    "error": "Error message",
+    "details": "Additional context or stack trace"
+}
+```
+
+**Common HTTP Status Codes:**
+
+| Code | Description |
+|------|-------------|
+| `200` | Success |
+| `400` | Bad request (missing or invalid parameters) |
+| `404` | Session or resource not found |
+| `500` | Internal server error |
+
+---
+
+## Next Steps
+
+- See [Examples](/examples) for complete working code samples
+- Learn about [VirtualNet](/virtualnet) for session-based testing
+- Explore the [Simulator](/simulator) UI for interactive testing
