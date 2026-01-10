@@ -72,6 +72,12 @@ export default function SimulatorContent() {
             return;
         }
 
+        // entry functions require a connected wallet for proper simulation
+        if (!selectedFunction.is_view && !account?.publicKey) {
+            setSimulationError("Please connect your wallet to simulate entry functions. The simulation requires your wallet's public key for authentication.");
+            return;
+        }
+
         setIsSimulating(true);
         setSimulationError(null);
         setSimulationResult(null);
@@ -108,15 +114,6 @@ export default function SimulatorContent() {
                 });
             } else {
                 // entry function - use transaction simulation
-                // get the wallet's public key if available (for proper simulation with real address)
-                let senderPublicKeyHex: string | undefined;
-                if (account?.publicKey) {
-                    // the publicKey from wallet adapter is a PublicKey object
-                    // convert to hex string for the simulation
-                    senderPublicKeyHex = account.publicKey.toString();
-                    console.log("Using wallet public key:", senderPublicKeyHex);
-                }
-
                 const input: SimulationInput = {
                     contractAddress: contractAddress,
                     moduleName: selectedModule.name,
@@ -126,7 +123,8 @@ export default function SimulatorContent() {
                     senderAddress: params.senderAddress,
                     gasLimit: params.gasLimit,
                     gasPrice: params.gasPrice,
-                    senderPublicKeyHex: senderPublicKeyHex,
+                    // pass the public key object directly for proper simulation
+                    senderPublicKey: account?.publicKey,
                 };
 
                 console.log("Simulating with input:", input);

@@ -1,4 +1,4 @@
-import { Aptos, AptosConfig, Network, Account } from "@aptos-labs/ts-sdk";
+import { Aptos, AptosConfig, Network, Account, PublicKey } from "@aptos-labs/ts-sdk";
 import { NetworkType, NETWORKS } from "../app/(app)/simulator/types";
 
 // create aptos client for a given network
@@ -21,9 +21,9 @@ export interface SimulationInput {
     senderAddress: string;
     gasLimit: string;
     gasPrice: string;
-    // optional: public key hex string from connected wallet
+    // optional: public key object from connected wallet
     // when provided, enables simulation with the real sender address
-    senderPublicKeyHex?: string;
+    senderPublicKey?: PublicKey;
 }
 
 export interface SimulationResult {
@@ -79,21 +79,17 @@ export async function simulateTransaction(
     });
 
     const senderAddress = input.senderAddress;
-    const senderPublicKeyHex = input.senderPublicKeyHex;
+    const senderPublicKey = input.senderPublicKey;
 
     try {
         // for simulation, the public key must derive to the sender's authentication key.
         // this is a fundamental requirement of the move vm.
 
         // case 1: wallet is connected - use real sender address with wallet's public key
-        if (senderAddress && senderPublicKeyHex) {
+        console.log("senderAddress", senderAddress);
+        console.log("senderPublicKey", senderPublicKey?.toString());
+        if (senderAddress && senderPublicKey) {
             console.log("Using wallet public key for simulation with real sender address");
-
-            // import ed25519publickey to create public key from hex
-            const { Ed25519PublicKey } = await import("@aptos-labs/ts-sdk");
-
-            // create public key from hex string
-            const publicKey = new Ed25519PublicKey(senderPublicKeyHex);
 
             // build the transaction with the real sender address
             const transaction = await client.transaction.build.simple({
@@ -109,9 +105,9 @@ export async function simulateTransaction(
                 },
             });
 
-            // simulate with the wallet's public key
+            // simulate with the wallet's public key object directly
             const simulationResults = await client.transaction.simulate.simple({
-                signerPublicKey: publicKey,
+                signerPublicKey: senderPublicKey,
                 transaction,
             });
 
@@ -141,7 +137,6 @@ export async function simulateTransaction(
 
         // simulate the transaction using the sdk method
         const simulationResults = await client.transaction.simulate.simple({
-            signerPublicKey: simulationAccount.publicKey,
             transaction,
         });
 
