@@ -2,6 +2,14 @@
 
 A blockchain transaction simulation platform for Movement Network. Trace allows developers to test and simulate transactions before deploying them on-chain.
 
+## 🌐 Production URLs
+
+| Service | URL |
+|---------|-----|
+| **Website (App)** | https://tracce.lol |
+| **Documentation** | https://docs.tracce.lol |
+| **Backend API** | https://backend.tracce.lol |
+
 [![Website](https://img.shields.io/badge/Website-tracce.lol-orange)](https://tracce.lol)
 [![Docs](https://img.shields.io/badge/Docs-docs.tracce.lol-blue)](https://docs.tracce.lol)
 [![API](https://img.shields.io/badge/API-backend.tracce.lol-green)](https://backend.tracce.lol)
@@ -40,13 +48,6 @@ This is a [Turborepo](https://turbo.build/repo) monorepo containing:
 |------------|-----|
 | **Movement Core (Fork)** | https://github.com/vesper85/movement-core-new |
 
-## 🌐 Production URLs
-
-| Service | URL |
-|---------|-----|
-| **Website (App)** | https://tracce.lol |
-| **Documentation** | https://docs.tracce.lol |
-| **Backend API** | https://backend.tracce.lol |
 
 ## 🛠️ Getting Started
 
